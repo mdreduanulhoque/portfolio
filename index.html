@@ -21,7 +21,7 @@
         7. Education Section (Timeline)
         8. Trimester Overview Section (Gallery)
         9. Experience Section (Cards)
-        10. Skills Section (Progress Bars)
+        10. Skills Section (Logos)
         11. Contact Section
         12. Footer
         13. Animations & Effects
@@ -629,50 +629,59 @@
         }
         .experience-card p { font-size: 0.9rem; }
 
-        /* 10. Skills Section (Progress Bars) */
+        /* 10. Skills Section */
         #skills {
             background-color: #ffffff;
         }
-        .skills-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-        }
-        .skill-category h3 {
-            color: var(--secondary-color);
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        .skill-item {
-            margin-bottom: 15px;
-        }
-        .skill-item p {
-            margin-bottom: 5px;
-            font-weight: 500;
+        .skills-logo-grid {
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
         }
-        .progress-bar-container {
-            width: 100%;
-            background-color: #e0e0e0;
+        .skill-logo-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 130px;
+            height: 120px;
+            padding: 15px;
+            background-color: #fff;
             border-radius: var(--border-radius);
-            height: 12px; 
-            overflow: hidden;
+            border: 1px solid #eee;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+            text-align: center;
         }
-        .progress-bar {
-            height: 100%;
-            width: 0; 
-            background: linear-gradient(45deg, var(--secondary-color), var(--accent-color));
-            border-radius: var(--border-radius);
-            transition: width 1.5s ease-out;
-            text-align: right;
-            padding-right: 5px;
-            line-height: 12px; 
-            font-size: 0.7rem;
-            color: white;
-            opacity: 0; 
+        .skill-logo-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
+        .skill-logo-item i {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            height: 56px; /* Set height for consistency */
+            width: auto;
+            line-height: 56px; /* Center vertically */
+            font-style: normal; /* remove italics from <i> */
+        }
+        
+        .skill-logo-item p {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+        .icon-html { color: #E34F26; }
+        .icon-css { color: #1572B6; }
+        .icon-wp { color: #21759B; }
+        .icon-word { color: #2B579A; }
+        .icon-excel { color: #217346; }
+        .icon-ppt { color: #B7472A; }
+        .icon-c { color: #A8B9CC; font-weight: 700; }
+        .icon-cpp { color: #00599C; font-weight: 700; font-size: 3rem; }
+
 
         /* 11. Contact Section */
         #contact {
@@ -810,11 +819,6 @@
             .hero-content h1 { font-size: 3rem; }
             h2 { font-size: 2rem; }
 
-            /* About section stacking moved to 768px breakpoint */
-            /* .about-content { grid-template-columns: 1fr; text-align: center; } */
-            /* .about-image img { margin: 20px auto 0; } */
-            /* .about-text ul li { justify-content: center; } */
-
             .timeline::after { left: 30px; }
             .timeline-item { width: 100%; padding-left: 70px; padding-right: 25px; }
             .timeline-item.left::before, .timeline-item.right::before {
@@ -880,7 +884,6 @@
             .hero-content p.subtitle { font-size: 1.2rem; }
             .btn { padding: 10px 20px; }
 
-            .skills-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr; text-align: center; }
             .footer-col h4::after { left: 50%; transform: translateX(-50%); }
             .social-links { margin-bottom: 20px; }
@@ -1060,59 +1063,51 @@
         </div>
     </section>
 
+    <!-- === EDITED SKILLS SECTION === -->
     <section id="skills" class="fade-up">
         <div class="container">
-            <h2 class="section-title">Skills</h2>
-            <div class="skills-grid">
-                <div class="skill-category">
-                    <h3>Office & Productivity</h3>
-                    <div class="skill-item">
-                        <p><span>Microsoft Word</span><span>90%</span></p>
-                        <div class="progress-bar-container"><div class="progress-bar" data-width="90%"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <p><span>Microsoft Excel</span><span>75%</span></p>
-                        <div class="progress-bar-container"><div class="progress-bar" data-width="75%"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <p><span>PowerPoint</span><span>85%</span></p>
-                        <div class="progress-bar-container"><div class="progress-bar" data-width="85%"></div></div>
-                    </div>
+            <h2 class="section-title">Technical Skills</h2>
+            <div class="skills-logo-grid">
+                <div class="skill-logo-item stagger-item">
+                    <i class="fab fa-html5 icon-html"></i>
+                    <p>HTML5</p>
                 </div>
-                <div class="skill-category">
-                    <h3>Design Tools</h3>
-                    <div class="skill-item">
-                        <p><span>Figma</span><span>70%</span></p>
-                        <div class="progress-bar-container"><div class="progress-bar" data-width="70%"></div></div>
-                    </div>
-                    
-                     <div class="skill-item">
-                        <p><span>Canva</span><span>80%</span></p>
-                        <div class="progress-bar-container"><div class="progress-bar" data-width="80%"></div></div>
-                    </div>
+                <div class="skill-logo-item stagger-item">
+                    <i class="fab fa-css3-alt icon-css"></i>
+                    <p>CSS3</p>
                 </div>
-                <div class="skill-category">
-                    <h3>Web Technologies</h3>
-                    <div class="skill-item">
-                        <p><span>HTML5</span><span>95%</span></p>
-                        <div class="progress-bar-container"><div class="progress-bar" data-width="95%"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <p><span>CSS3</span><span>70%</span></p>
-                        <div class="progress-bar-container"><div class="progress-bar" data-width="70%"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <p><span>JavaScript</span><span>50%</span></p>
-                        <div class="progress-bar-container"><div class="progress-bar" data-width="50%"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <p><span>wordPress</span><span>75%</span></p>
-                        <div class="progress-bar-container"><div class="progress-bar" data-width="75%"></div></div>
-                    </div>
+                <div class="skill-logo-item stagger-item">
+                    <i class="icon-c">C</i>
+                    <p>C Language</p>
+                </div>
+                 <div class="skill-logo-item stagger-item">
+                    <i class="icon-cpp">C++</i>
+                    <p>C++</p>
+                </div>
+                <div class="skill-logo-item stagger-item">
+                    <i class="fab fa-wordpress icon-wp"></i>
+                    <p>WordPress</p>
+                </div>
+                <div class="skill-logo-item stagger-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#00C4CC"><path d="M12.012.012C5.39.012.011 5.39.011 12.013c0 6.621 5.379 11.999 12.001 11.999c6.622 0 12-5.378 12-11.999c0-6.623-5.378-12.001-12-12.001zm.006 4.39a2.38 2.38 0 0 1 2.384 2.384a2.38 2.38 0 0 1-2.384 2.384A2.38 2.38 0 0 1 9.634 6.786A2.38 2.38 0 0 1 12.018 4.4zM7.22 12.013a4.793 4.793 0 1 1 4.792 4.792a4.792 4.792 0 0 1-4.792-4.792zm9.584 2.384a2.38 2.38 0 0 1 2.384 2.384a2.38 2.38 0 0 1-2.384 2.384a2.38 2.38 0 0 1-2.384-2.384a2.38 2.38 0 0 1 2.384-2.384z"/></svg>
+                    <p>Canva</p>
+                </div>
+                <div class="skill-logo-item stagger-item">
+                    <i class="fas fa-file-word icon-word"></i>
+                    <p>MS Word</p>
+                </div>
+                <div class="skill-logo-item stagger-item">
+                    <i class="fas fa-file-excel icon-excel"></i>
+                    <p>MS Excel</p>
+                </div>
+                <div class="skill-logo-item stagger-item">
+                    <i class="fas fa-file-powerpoint icon-ppt"></i>
+                    <p>MS PowerPoint</p>
                 </div>
             </div>
         </div>
     </section>
+    <!-- === END OF EDITED SKILLS SECTION === -->
 
     <section id="contact" class="fade-up">
         <div class="container">
@@ -1197,10 +1192,10 @@
     3. Navigation Bar Logic (Scroll & Mobile)
     4. Particles.js Initialization
     5. Smooth Scrolling for Nav Links
-    6. Scroll Animations (Fade-up, Staggered, Progress Bars)
-    7. Trimester Gallery Auto-Scroll (Optional, can be complex)
+    6. Scroll Animations (Fade-up, Staggered)
+    7. Trimester Gallery Auto-Scroll (Optional)
     8. Footer Current Year
-    9. Contact Form (Basic, no actual submission)
+    9. Contact Form (Basic)
     --------------------------------------------------------------------------------
     */
 
@@ -1398,8 +1393,7 @@
             });
         }
 
-        // 5. Smooth Scrolling for Nav Links (already handled by html scroll-behavior, but good for fallback)
-        // For this example, CSS `scroll-behavior` is primary.
+        // 5. Smooth Scrolling is handled by CSS scroll-behavior.
 
         // 6. Scroll Animations
         const observerOptions = {
@@ -1412,32 +1406,26 @@
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
-                    if (entry.target.classList.contains('progress-bar')) {
-                        entry.target.style.width = entry.target.dataset.width;
-                        entry.target.style.opacity = 1; // Make progress bar visible
-                    }
+                    // This logic handles general fade-up and timeline items
                     if (entry.target.classList.contains('stagger-item')) {
-                         entry.target.style.transitionDelay = entry.target.dataset.delay || '0s';
                          entry.target.style.opacity = 1;
                          entry.target.style.transform = 'translateY(0)';
                     }
                      if (entry.target.classList.contains('timeline-item')) {
                          entry.target.classList.add('visible');
                     }
-                    // observer.unobserve(entry.target); // No need to unobserve if animation is one-time
+                    // observer.unobserve(entry.target); // Keep observing for re-animation if needed
                 }
             });
         };
 
         const scrollObserver = new IntersectionObserver(observerCallback, observerOptions);
 
+        // Observe all elements that need animation
         document.querySelectorAll('.fade-up').forEach(el => scrollObserver.observe(el));
         document.querySelectorAll('.timeline-item').forEach(el => scrollObserver.observe(el));
-        document.querySelectorAll('.progress-bar').forEach(bar => {
-            bar.style.opacity = 0;
-            scrollObserver.observe(bar);
-        });
         
+        // Stagger animations for different sections
         const galleryItems = document.querySelectorAll('.gallery-item.stagger-item');
         galleryItems.forEach((item, index) => {
             item.style.transitionDelay = `${index * 0.15}s`; 
@@ -1449,35 +1437,35 @@
             card.style.transitionDelay = `${index * 0.15}s`;
             scrollObserver.observe(card);
         });
+        
+        const skillLogos = document.querySelectorAll('.skill-logo-item.stagger-item');
+        skillLogos.forEach((logo, index) => {
+            logo.style.transitionDelay = `${index * 0.1}s`;
+            scrollObserver.observe(logo);
+        });
 
 
         // 7. Trimester Gallery Auto-Scroll (Optional)
-        const galleryContainer = document.querySelector('.gallery-container');
-        let scrollInterval;
-
-        function startGalleryScroll() {
-            if (!galleryContainer) return;
-            scrollInterval = setInterval(() => {
-                if (galleryContainer.scrollLeft + galleryContainer.clientWidth >= galleryContainer.scrollWidth -1) { 
-                    galleryContainer.scrollTo({ left: 0, behavior: 'smooth' }); 
-                } else {
-                    galleryContainer.scrollBy({ left: 1, behavior: 'smooth' }); 
-                }
-            }, 50); 
-        }
-
-        function stopGalleryScroll() {
-            clearInterval(scrollInterval);
-        }
-
-        if (galleryContainer) {
-            // Optional: Start auto-scroll. Comment out if not desired.
-            // startGalleryScroll(); 
-            // galleryContainer.addEventListener('mouseenter', stopGalleryScroll);
-            // galleryContainer.addEventListener('mouseleave', startGalleryScroll);
-            // galleryContainer.addEventListener('touchstart', stopGalleryScroll, {passive: true});
-            // galleryContainer.addEventListener('touchend', startGalleryScroll);
-        }
+        // This is currently disabled. Uncomment the lines below to enable it.
+        // const galleryContainer = document.querySelector('.gallery-container');
+        // let scrollInterval;
+        // function startGalleryScroll() {
+        //     if (!galleryContainer) return;
+        //     scrollInterval = setInterval(() => {
+        //         if (galleryContainer.scrollLeft + galleryContainer.clientWidth >= galleryContainer.scrollWidth -1) { 
+        //             galleryContainer.scrollTo({ left: 0, behavior: 'smooth' }); 
+        //         } else {
+        //             galleryContainer.scrollBy({ left: 1, behavior: 'smooth' }); 
+        //         }
+        //     }, 50); 
+        // }
+        // function stopGalleryScroll() {
+        //     clearInterval(scrollInterval);
+        // }
+        // if (galleryContainer) {
+        //     galleryContainer.addEventListener('mouseenter', stopGalleryScroll);
+        //     galleryContainer.addEventListener('mouseleave', startGalleryScroll);
+        // }
 
 
         // 8. Footer Current Year
@@ -1486,7 +1474,7 @@
             currentYearSpan.textContent = new Date().getFullYear();
         }
 
-        // 9. Contact Form (Basic)
+        // 9. Contact Form (Basic Demo)
         const contactForm = document.querySelector('.contact-form');
         if (contactForm) {
             contactForm.addEventListener('submit', (e) => {
