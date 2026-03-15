@@ -1,11 +1,85 @@
-<<<<<<< HEAD
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MD REDUANUL HOQUE - Portfolio
 
-## Getting Started
+A modern, interactive personal portfolio website showcasing the profile of MD REDUANUL HOQUE - a Computer Science student, developer, and educator based in Dhaka, Bangladesh.
 
-First, run the development server:
+## 🔗 Live Website
+
+Visit the live portfolio: [https://portfolio-md-reduanul-hoque.web.app/](https://portfolio-md-reduanul-hoque.web.app/)
+
+## 📦 Preview
+
+![Alt text](public\preview-1.png)
+![Alt text](public\preview-2.png)
+![Alt text](public\preview-3.png)
+
+## 🛠️ Tech Stack
+
+- **Framework:** [Next.js](https://nextjs.org) 16
+- **UI Library:** React 19
+- **Styling:** Tailwind CSS 4
+- **Language:** TypeScript
+- **Icons:** Lucide React
+- **Theme:** next-themes (Dark/Light mode support)
+- **Deployment:** Firebase Hosting
+
+## 📁 Project Structure
+
+```
+portfolio/
+├── public/
+│   ├── Formal.jpg                 # Profile image
+│   └── md_reduanul_hoque_resume.pdf
+├── src/
+│   ├── app/
+│   │   ├── globals.css           # Global styles
+│   │   ├── layout.tsx            # Root layout
+│   │   └── page.tsx              # Main page
+│   └── components/
+│       ├── footer.tsx            # Footer component
+│       ├── navbar.tsx            # Navigation bar
+│       ├── theme-provider.tsx   # Theme context provider
+│       ├── theme-toggle.tsx     # Dark/Light mode toggle
+│       └── sections/
+│           ├── about.tsx         # About & education section
+│           ├── classes.tsx       # YouTube classes section
+│           ├── contact.tsx       # Contact & social links
+│           ├── hero.tsx          # Hero/landing section
+│           ├── projects.tsx      # Projects showcase
+│           └── skills.tsx        # Skills display
+├── firebase.json                 # Firebase configuration
+├── next.config.ts               # Next.js configuration
+├── package.json                  # Dependencies
+└── tsconfig.json                # TypeScript configuration
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm/yarn/pnpm/bun
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd portfolio
+
+# Install dependencies
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+### Development
+
+```bash
+# Run the development server
 npm run dev
 # or
 yarn dev
@@ -15,26 +89,55 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the project.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Build for production
+npm run build
+# or
+yarn build
+# or
+pnpm build
+# or
+bun build
+```
 
-## Learn More
+### Start Production Server
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run start
+# or
+yarn start
+# or
+pnpm start
+# or
+bun start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📱 Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 🎨 **Modern UI** - Sleek, responsive design with smooth animations
+- 🌙 **Dark/Light Mode** - Toggle between themes for comfortable viewing
+- 📱 **Fully Responsive** - Works on all device sizes
+- 🎯 **Interactive Elements** - Engaging hover effects and transitions
+- 💻 **Terminal-style Skills** - Unique skills showcase with coding aesthetic
+- 📊 **Project Showcase** - Display of personal projects with live demos
+- 🎥 **YouTube Classes** - Educational content section
+- 📬 **Contact Options** - Multiple ways to connect
 
-## Deploy on Vercel
+## 🔗 Social Links
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- 📧 Email: [mdreduanulhoquesadik@gmail.com](mailto:mdreduanulhoquesadik@gmail.com)
+- 💼 LinkedIn: [md-reduanul-hoque](https://www.linkedin.com/in/md-reduanul-hoque-/)
+- 🐙 GitHub: [mdreduanulhoque](https://github.com/mdreduanulhoque)
+- 📘 Facebook: [reduan.sadik.9](https://www.facebook.com/reduan.sadik.9)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-=======
-# portfolio_
->>>>>>> origin/main
+## 📄 License
+
+This project is for personal portfolio purposes. All rights reserved to MD REDUANUL HOQUE.
+
+---
+
+Built with ❤️ using Next.js and Tailwind CSS
