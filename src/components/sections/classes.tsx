@@ -1,28 +1,41 @@
+"use client";
+
 import * as React from "react";
 import { Youtube, PlayCircle } from "lucide-react";
 import Image from "next/image";
+import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
+import type { ClassItem } from "@/lib/data";
+
+const fallbackClasses: ClassItem[] = [
+    { id: "1", title: "Thread in Java || Question Solve || OOP", videoId: "uobWZ7FA6XM", description: "A detailed problem-solving session covering Threads in Object-Oriented Programming.", url: "https://youtu.be/uobWZ7FA6XM?si=87TNoOs94kpDdL2S", order: 0 },
+    { id: "2", title: "GUI - Design Part in Java", videoId: "Rs6k1PNkVf4", description: "A comprehensive guide on designing Graphical User Interfaces (GUI) in Java.", url: "https://youtu.be/Rs6k1PNkVf4?si=nMWrT2wIJMuSGoRP", order: 1 },
+    { id: "3", title: "ICS One Shot Class For Mid", videoId: "GWtQ2FKl6ks", description: "A complete one-shot review class designed to prepare students for the Introduction to Computer Systems (ICS) midterm.", url: "https://youtu.be/GWtQ2FKl6ks?si=scAGxTYf92YBeWY-", order: 2 },
+];
+
+function ClassesSkeleton() {
+    return (
+        <section id="classes" className="py-24 bg-muted/30 relative border-t border-border/50">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+                <div className="flex flex-col items-center gap-4 mb-16">
+                    <div className="h-7 w-36 bg-muted animate-pulse rounded-full" />
+                    <div className="h-12 w-56 bg-muted animate-pulse rounded-lg" />
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-72 bg-muted animate-pulse rounded-2xl" />
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
 
 export function ClassesSection() {
-    const classes = [
-        {
-            title: "Thread in Java || Question Solve || OOP",
-            videoId: "uobWZ7FA6XM",
-            description: "A detailed problem-solving session covering Threads in Object-Oriented Programming.",
-            url: "https://youtu.be/uobWZ7FA6XM?si=87TNoOs94kpDdL2S"
-        },
-        {
-            title: "GUI - Design Part in Java",
-            videoId: "Rs6k1PNkVf4",
-            description: "A comprehensive guide on designing Graphical User Interfaces (GUI) in Java.",
-            url: "https://youtu.be/Rs6k1PNkVf4?si=nMWrT2wIJMuSGoRP"
-        },
-        {
-            title: "ICS One Shot Class For Mid",
-            videoId: "GWtQ2FKl6ks",
-            description: "A complete one-shot review class designed to prepare students for the Introduction to Computer Systems (ICS) midterm.",
-            url: "https://youtu.be/GWtQ2FKl6ks?si=scAGxTYf92YBeWY-"
-        }
-    ];
+    const { data: classes, loading } = useFirestoreCollection<ClassItem>("classes");
+
+    if (loading) return <ClassesSkeleton />;
+
+    const items = classes.length > 0 ? classes : fallbackClasses;
 
     return (
         <section id="classes" className="py-24 bg-muted/30 relative border-t border-border/50">
@@ -38,9 +51,9 @@ export function ClassesSection() {
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {classes.map((item, idx) => (
+                    {items.map((item) => (
                         <a
-                            key={idx}
+                            key={item.id}
                             href={item.url}
                             target="_blank"
                             rel="noreferrer"

@@ -1,9 +1,52 @@
+"use client";
+
 import * as React from "react";
 import { ArrowDown, Terminal } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
+import type { Profile } from "@/lib/data";
+
+const fallbackProfile: Profile = {
+    name: "MD REDUANUL HOQUE",
+    tagline: "\"Bro, we have one life. Why waste it? Let's follow the orders of God, make Him happy & pass innovations to the next generations.\"",
+    badges: ["Computer Science Student", "Educator"],
+    location: "Dhaka, Bangladesh",
+    eduStatus: "5th Trimester B.Sc. in CSE @ UIU",
+    statusLine: "Learning, Building, Teaching...",
+    hobbies: ["Reading", "Football", "Gaming", "☕"],
+    philosophyTitle: "The Philosophy",
+    philosophyParagraphs: [],
+    profileImageUrl: "/Formal.jpg",
+    resumeUrl: "/md_reduanul_hoque_resume.pdf",
+};
+
+function HeroSkeleton() {
+    return (
+        <section className="relative flex min-h-[calc(100vh-4rem)] items-center px-4 overflow-hidden pt-12 pb-24 md:py-0">
+            <div className="container mx-auto max-w-6xl grid md:grid-cols-2 gap-12 items-center">
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <div className="flex gap-3">
+                            <div className="h-7 w-48 bg-muted animate-pulse rounded-full" />
+                            <div className="h-7 w-24 bg-muted animate-pulse rounded-full" />
+                        </div>
+                        <div className="h-16 w-80 bg-muted animate-pulse rounded-lg" />
+                        <div className="h-20 w-full bg-muted animate-pulse rounded-lg" />
+                    </div>
+                </div>
+                <div className="h-72 bg-muted animate-pulse rounded-xl" />
+            </div>
+        </section>
+    );
+}
 
 export function HeroSection() {
+    const { data: profile, loading } = useFirestoreDoc<Profile>("profile", "main");
+    const p = profile || fallbackProfile;
+
+    if (loading) return <HeroSkeleton />;
+
     return (
         <section className="relative flex min-h-[calc(100vh-4rem)] items-center px-4 overflow-hidden pt-12 pb-24 md:py-0">
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none" />
@@ -83,32 +126,34 @@ export function HeroSection() {
                 <div className="space-y-8 animate-in fade-in slide-in-from-left-8 duration-1000 fill-mode-both">
                     <div className="space-y-4">
                         <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
-                            <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                                <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
-                                Computer Science Student
-                            </div>
-                            <div className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-500">
-                                <span className="flex h-2 w-2 rounded-full bg-emerald-500 mr-2 xl:animate-pulse"></span>
-                                Educator
-                            </div>
+                            {p.badges.map((badge, i) => (
+                                <div key={i} className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium ${i === 0 ? 'border-primary/20 bg-primary/10 text-primary' : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500'}`}>
+                                    <span className={`flex h-2 w-2 rounded-full mr-2 animate-pulse ${i === 0 ? 'bg-primary' : 'bg-emerald-500'}`}></span>
+                                    {badge}
+                                </div>
+                            ))}
                         </div>
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                             <div className="relative w-32 h-40 sm:w-40 sm:h-48 rounded-2xl overflow-hidden border-4 border-background shadow-xl ring-2 ring-primary/20 shrink-0 sm:mt-2">
                                 <Image
-                                    src="/Formal.jpg"
-                                    alt="Reduanul Hoque"
+                                    src={p.profileImageUrl}
+                                    alt={p.name}
                                     fill
                                     className="object-cover"
                                 />
                             </div>
                             <div className="space-y-4 text-center sm:text-left pt-2">
                                 <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight font-lora text-foreground relative mt-0 sm:-mt-2">
-                                    MD REDUANUL <br className="hidden sm:block" /> HOQUE
+                                    {p.name.split(" ").length > 2 ? (
+                                        <>
+                                            {p.name.split(" ").slice(0, -1).join(" ")} <br className="hidden sm:block" /> {p.name.split(" ").slice(-1)}
+                                        </>
+                                    ) : p.name}
                                 </h1>
                             </div>
                         </div>
                         <p className="max-w-[42rem] mt-6 leading-relaxed text-muted-foreground sm:text-lg text-center sm:text-left">
-                            <strong className="text-foreground font-medium">"Bro, we have one life. Why waste it?</strong> Let's follow the orders of God, make Him happy & pass innovations to the next generations."
+                            <strong className="text-foreground font-medium">&quot;Bro, we have one life. Why waste it?</strong> Let&apos;s follow the orders of God, make Him happy &amp; pass innovations to the next generations.&quot;
                         </p>
                     </div>
 
@@ -123,7 +168,7 @@ export function HeroSection() {
                             <span className="relative">View My Work</span>
                         </Link>
                         <a
-                            href="/md_reduanul_hoque_resume.pdf"
+                            href={p.resumeUrl}
                             download
                             className="inline-flex h-12 items-center justify-center rounded-md border border-input/50 bg-background/50 backdrop-blur-xs px-8 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring gap-2 group"
                         >
@@ -153,16 +198,16 @@ export function HeroSection() {
                                 <span className="text-pink-500">➜</span> <span className="text-cyan-400">~</span> whoami
                             </div>
                             <div className="text-slate-300">
-                                Reduanul Hoque | Developer & Educator
+                                {p.name.split(" ").slice(-2).join(" ")} | Developer &amp; Educator
                             </div>
                             <div className="text-emerald-400">
                                 <span className="text-pink-500">➜</span> <span className="text-cyan-400">~</span> cat status.txt
                             </div>
                             <div className="text-slate-300 space-y-1 pl-4 border-l-2 border-slate-700">
-                                <p><span className="text-cyan-400">Location:</span> Dhaka, Bangladesh</p>
-                                <p><span className="text-cyan-400">Edu:</span> 5th Trimester B.Sc. in CSE @ UIU</p>
-                                <p><span className="text-cyan-400">Status:</span> Learning, Building, Teaching...</p>
-                                <p><span className="text-cyan-400">Hobbies:</span> [Reading, Football, Gaming, ☕]</p>
+                                <p><span className="text-cyan-400">Location:</span> {p.location}</p>
+                                <p><span className="text-cyan-400">Edu:</span> {p.eduStatus}</p>
+                                <p><span className="text-cyan-400">Status:</span> {p.statusLine}</p>
+                                <p><span className="text-cyan-400">Hobbies:</span> [{p.hobbies.join(", ")}]</p>
                             </div>
                             <div className="flex items-center text-emerald-400 pt-2">
                                 <span className="text-pink-500">➜</span> <span className="text-cyan-400 mr-2">~</span> <span className="w-2 h-4 bg-emerald-400 animate-pulse"></span>
@@ -174,4 +219,3 @@ export function HeroSection() {
         </section>
     );
 }
-

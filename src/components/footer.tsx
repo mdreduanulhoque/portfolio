@@ -1,7 +1,22 @@
+"use client";
+
 import * as React from "react";
 import { Github, Linkedin, Mail } from "lucide-react";
+import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
+import type { SocialLinks } from "@/lib/data";
+
+const fallbackLinks: SocialLinks = {
+    email: "mdreduanulhoquesadik@gmail.com",
+    linkedin: "https://www.linkedin.com/in/md-reduanul-hoque-/",
+    github: "https://github.com/mdreduanulhoque",
+    facebook: "https://www.facebook.com/reduan.sadik.9",
+    resumeUrl: "/md_reduanul_hoque_resume.pdf",
+};
 
 export function Footer() {
+    const { data: links } = useFirestoreDoc<SocialLinks>("social_links", "main");
+    const l = links || fallbackLinks;
+
     return (
         <footer className="w-full border-t border-border/40 bg-background mt-auto">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -13,7 +28,7 @@ export function Footer() {
                     </p>
                     <div className="flex items-center gap-4 justify-center">
                         <a
-                            href="https://github.com/mdreduanulhoque"
+                            href={l.github}
                             target="_blank"
                             rel="noreferrer"
                             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -22,7 +37,7 @@ export function Footer() {
                             <Github className="h-5 w-5" />
                         </a>
                         <a
-                            href="https://www.linkedin.com/in/md-reduanul-hoque-/"
+                            href={l.linkedin}
                             target="_blank"
                             rel="noreferrer"
                             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -31,7 +46,7 @@ export function Footer() {
                             <Linkedin className="h-5 w-5" />
                         </a>
                         <a
-                            href="mailto:mdreduanulhoquesadik@gmail.com"
+                            href={`mailto:${l.email}`}
                             className="text-muted-foreground hover:text-foreground transition-colors"
                             aria-label="Email"
                         >

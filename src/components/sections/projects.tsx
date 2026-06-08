@@ -1,45 +1,64 @@
+"use client";
+
 import * as React from "react";
 import { ExternalLink, Github, Code, CheckCircle2, ChevronRight } from "lucide-react";
+import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
+import type { Project } from "@/lib/data";
+
+const fallbackProjects: Project[] = [
+    {
+        id: "1", title: "Simon Game",
+        description: "A classic colorful memory game. Features interactive buttons, sound effects, full responsiveness, and game over animations.",
+        techStack: ["HTML5", "CSS3", "JS (ES6)", "jQuery"],
+        liveLink: "https://mdreduanulhoque.github.io/SimonGame/",
+        githubLink: "https://github.com/mdreduanulhoque/SimonGame",
+        features: ["Colorful interactive buttons", "Sound effects for each color", "Game Over animation"],
+        order: 0,
+    },
+    {
+        id: "2", title: "Vibe Chess",
+        description: "A relaxing, timer-based chess variant. Games end when the 5-minute timer expires, winner determined by territorial control.",
+        techStack: ["Vanilla JS", "HTML5", "CSS3"],
+        liveLink: "https://mdreduanulhoque.github.io/vibe-chess/",
+        githubLink: "https://github.com/mdreduanulhoque/vibe-chess",
+        features: ["Territorial Victory System", "Relaxing Design & Animations", "Smart 5-minute Timer display"],
+        order: 1,
+    },
+    {
+        id: "3", title: "Array Memory Visualizer",
+        description: "A visualization tool for Array Memory Mapping. Shows grid generation, step-by-step calculations, and major mapping.",
+        techStack: ["JavaScript", "HTML", "CSS"],
+        liveLink: "https://mdreduanulhoque.github.io/Array-Memory-Mapping/",
+        githubLink: "https://github.com/mdreduanulhoque/Array-Memory-Mapping",
+        features: ["Dynamic grid generation", "Row/Column Major mapping", "Formula calculation steps"],
+        order: 2,
+    },
+];
+
+function ProjectsSkeleton() {
+    return (
+        <section id="projects" className="py-24 bg-muted/10 relative overflow-hidden">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+                <div className="mb-16 space-y-4">
+                    <div className="h-7 w-24 bg-muted animate-pulse rounded-full" />
+                    <div className="h-12 w-56 bg-muted animate-pulse rounded-lg" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-80 bg-muted animate-pulse rounded-2xl" />
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
 
 export function ProjectsSection() {
-    const projects = [
-        {
-            title: "Simon Game",
-            description: "A classic colorful memory game. Features interactive buttons, sound effects, full responsiveness, and game over animations.",
-            techStack: ["HTML5", "CSS3", "JS (ES6)", "jQuery"],
-            liveLink: "https://mdreduanulhoque.github.io/SimonGame/",
-            githubLink: "https://github.com/mdreduanulhoque/SimonGame",
-            features: [
-                "Colorful interactive buttons",
-                "Sound effects for each color",
-                "Game Over animation",
-            ]
-        },
-        {
-            title: "Vibe Chess",
-            description: "A relaxing, timer-based chess variant. Games end when the 5-minute timer expires, winner determined by territorial control.",
-            techStack: ["Vanilla JS", "HTML5", "CSS3"],
-            liveLink: "https://mdreduanulhoque.github.io/vibe-chess/",
-            githubLink: "https://github.com/mdreduanulhoque/vibe-chess",
-            features: [
-                "Territorial Victory System",
-                "Relaxing Design & Animations",
-                "Smart 5-minute Timer display"
-            ]
-        },
-        {
-            title: "Array Memory Visualizer",
-            description: "A visualization tool for Array Memory Mapping. Shows grid generation, step-by-step calculations, and major mapping.",
-            techStack: ["JavaScript", "HTML", "CSS"],
-            liveLink: "https://mdreduanulhoque.github.io/Array-Memory-Mapping/",
-            githubLink: "https://github.com/mdreduanulhoque/Array-Memory-Mapping",
-            features: [
-                "Dynamic grid generation",
-                "Row/Column Major mapping",
-                "Formula calculation steps"
-            ]
-        }
-    ];
+    const { data: projects, loading } = useFirestoreCollection<Project>("projects");
+
+    if (loading) return <ProjectsSkeleton />;
+
+    const items = projects.length > 0 ? projects : fallbackProjects;
 
     return (
         <section id="projects" className="py-24 bg-muted/10 relative overflow-hidden">
@@ -59,9 +78,9 @@ export function ProjectsSection() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {projects.map((project, index) => (
+                    {items.map((project) => (
                         <div
-                            key={index}
+                            key={project.id}
                             className="group relative flex flex-col bg-background/40 backdrop-blur-md border border-border/50 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-500 shadow-sm hover:shadow-primary/5"
                         >
                             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>

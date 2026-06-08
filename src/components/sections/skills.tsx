@@ -1,20 +1,44 @@
+"use client";
+
 import * as React from "react";
 import { Terminal, Copy, HardDrive, Cpu, FileJson, Code2 } from "lucide-react";
+import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
+import type { Skill } from "@/lib/data";
+
+const fallbackSkills: Skill[] = [
+    { id: "1", name: "HTML5.exe", type: "Core", size: "124 KB", order: 0 },
+    { id: "2", name: "CSS3.exe", type: "Core", size: "256 KB", order: 1 },
+    { id: "3", name: "Tailwind_CSS.exe", type: "Framework", size: "8.4 MB", order: 2 },
+    { id: "4", name: "JavaScript.exe", type: "Language", size: "4.2 MB", order: 3 },
+    { id: "5", name: "jQuery.exe", type: "Library", size: "88 KB", order: 4 },
+    { id: "6", name: "NodeJS.exe", type: "Runtime", size: "32 MB", order: 5 },
+    { id: "7", name: "C_Language.exe", type: "Language", size: "1.1 MB", order: 6 },
+    { id: "8", name: "CPlusPlus.exe", type: "Language", size: "2.4 MB", order: 7 },
+    { id: "9", name: "WordPress.exe", type: "CMS", size: "64 MB", order: 8 },
+    { id: "10", name: "Canva.exe", type: "Design", size: "12 MB", order: 9 },
+    { id: "11", name: "MS_Office_Suite.exe", type: "Tools", size: "1.2 GB", order: 10 },
+];
+
+function SkillsSkeleton() {
+    return (
+        <section id="skills" className="py-24 bg-background text-foreground relative overflow-hidden">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+                <div className="flex flex-col items-center gap-4 mb-16">
+                    <div className="h-12 w-56 bg-muted animate-pulse rounded-lg" />
+                    <div className="h-5 w-72 bg-muted animate-pulse rounded" />
+                </div>
+                <div className="h-96 bg-muted animate-pulse rounded-xl" />
+            </div>
+        </section>
+    );
+}
 
 export function SkillsSection() {
-    const installedSkills = [
-        { name: "HTML5.exe", type: "Core", size: "124 KB" },
-        { name: "CSS3.exe", type: "Core", size: "256 KB" },
-        { name: "Tailwind_CSS.exe", type: "Framework", size: "8.4 MB" },
-        { name: "JavaScript.exe", type: "Language", size: "4.2 MB" },
-        { name: "jQuery.exe", type: "Library", size: "88 KB" },
-        { name: "NodeJS.exe", type: "Runtime", size: "32 MB" },
-        { name: "C_Language.exe", type: "Language", size: "1.1 MB" },
-        { name: "CPlusPlus.exe", type: "Language", size: "2.4 MB" },
-        { name: "WordPress.exe", type: "CMS", size: "64 MB" },
-        { name: "Canva.exe", type: "Design", size: "12 MB" },
-        { name: "MS_Office_Suite.exe", type: "Tools", size: "1.2 GB" },
-    ];
+    const { data: skills, loading } = useFirestoreCollection<Skill>("skills");
+
+    if (loading) return <SkillsSkeleton />;
+
+    const installedSkills = skills.length > 0 ? skills : fallbackSkills;
 
     return (
         <section id="skills" className="py-24 bg-background text-foreground relative overflow-hidden">
@@ -39,7 +63,7 @@ export function SkillsSection() {
                         <div className="text-xs text-slate-400 font-mono flex items-center gap-2">
                             <HardDrive className="w-3 h-3" /> System_Root
                         </div>
-                        <div className="w-12"></div> {/* Spacer for center alignment */}
+                        <div className="w-12"></div>
                     </div>
 
                     {/* Terminal Body */}
@@ -56,8 +80,8 @@ export function SkillsSection() {
                                 <div className="col-span-7">Name</div>
                             </div>
 
-                            {installedSkills.map((skill, index) => (
-                                <div key={index} className="grid grid-cols-12 gap-4 text-slate-300 py-1.5 hover:bg-white/5 transition-colors rounded px-2 -mx-2 items-center group cursor-default">
+                            {installedSkills.map((skill) => (
+                                <div key={skill.id} className="grid grid-cols-12 gap-4 text-slate-300 py-1.5 hover:bg-white/5 transition-colors rounded px-2 -mx-2 items-center group cursor-default">
                                     <div className="col-span-1 text-slate-500">-rwxrwx</div>
                                     <div className="col-span-2 text-slate-500">Recent</div>
                                     <div className="col-span-2 text-right text-cyan-400">{skill.size}</div>
