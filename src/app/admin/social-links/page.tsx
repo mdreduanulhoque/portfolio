@@ -37,9 +37,10 @@ export default function AdminSocialLinksPage() {
     try {
       await setDoc(doc(db, "social_links", "main"), formData);
       toast.success("Social links updated successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Failed to save: ${err.message}`);
+      toast.error(`Failed to save: ${msg}`);
     } finally {
       setSaving(false);
     }

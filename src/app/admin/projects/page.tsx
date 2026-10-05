@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { doc, addDoc, updateDoc, deleteDoc, collection } from "firebase/firestore";
 import type { Project } from "@/lib/data";
 import toast from "react-hot-toast";
-import { Save, X, Plus, Edit2, Trash, ArrowUp, ArrowDown, Sparkles } from "lucide-react";
+import { Save, X, Edit2, Trash, ArrowUp, ArrowDown, Sparkles } from "lucide-react";
 
 export default function AdminProjectsPage() {
   const { data: projects, loading } = useFirestoreCollection<Project>("projects");
@@ -68,9 +68,10 @@ export default function AdminProjectsPage() {
         toast.success("Project added!");
       }
       resetForm();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${msg}`);
     } finally {
       setFormLoading(false);
     }
@@ -81,9 +82,10 @@ export default function AdminProjectsPage() {
     try {
       await deleteDoc(doc(db, "projects", id));
       toast.success("Project deleted!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${msg}`);
     }
   };
 
@@ -122,9 +124,10 @@ export default function AdminProjectsPage() {
       await updateDoc(doc(db, "projects", itemA.id), { order: itemB.order });
       await updateDoc(doc(db, "projects", itemB.id), { order: itemA.order });
       toast.success("Order updated!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Failed to reorder: ${err.message}`);
+      toast.error(`Failed to reorder: ${msg}`);
     }
   };
 

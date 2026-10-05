@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { doc, addDoc, updateDoc, deleteDoc, collection } from "firebase/firestore";
 import type { Achievement } from "@/lib/data";
 import toast from "react-hot-toast";
-import { Save, X, Plus, Edit2, Trash, ArrowUp, ArrowDown } from "lucide-react";
+import { Save, X, Edit2, Trash, ArrowUp, ArrowDown } from "lucide-react";
 
 export default function AdminAchievementsPage() {
   const { data: achievements, loading } = useFirestoreCollection<Achievement>("achievements");
@@ -52,9 +52,10 @@ export default function AdminAchievementsPage() {
         toast.success("Achievement added!");
       }
       resetForm();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${msg}`);
     } finally {
       setFormLoading(false);
     }
@@ -65,9 +66,10 @@ export default function AdminAchievementsPage() {
     try {
       await deleteDoc(doc(db, "achievements", id));
       toast.success("Achievement deleted!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${msg}`);
     }
   };
 
@@ -82,9 +84,10 @@ export default function AdminAchievementsPage() {
       await updateDoc(doc(db, "achievements", itemA.id), { order: itemB.order });
       await updateDoc(doc(db, "achievements", itemB.id), { order: itemA.order });
       toast.success("Order updated!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Failed to reorder: ${err.message}`);
+      toast.error(`Failed to reorder: ${msg}`);
     }
   };
 

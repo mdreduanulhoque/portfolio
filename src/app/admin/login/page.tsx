@@ -30,9 +30,10 @@ export default function AdminLoginPage() {
       await signIn(email, password);
       toast.success("Welcome back, commander.");
       router.push("/admin");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Failed to sign in. Please verify credentials.");
+      const msg = err instanceof Error ? err.message : "Failed to sign in. Please verify credentials.";
+      setError(msg);
       toast.error("Access denied.");
     } finally {
       setAuthLoading(false);

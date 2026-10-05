@@ -56,9 +56,10 @@ export default function AdminProfilePage() {
       const url = await getDownloadURL(snapshot.ref);
       setFormData((prev) => ({ ...prev, profileImageUrl: url }));
       toast.success("Profile image uploaded successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Image upload failed: ${err.message}`);
+      toast.error(`Image upload failed: ${msg}`);
     } finally {
       setImgUploading(false);
     }
@@ -75,9 +76,10 @@ export default function AdminProfilePage() {
       const url = await getDownloadURL(snapshot.ref);
       setFormData((prev) => ({ ...prev, resumeUrl: url }));
       toast.success("Resume uploaded successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Resume upload failed: ${err.message}`);
+      toast.error(`Resume upload failed: ${msg}`);
     } finally {
       setDocUploading(false);
     }
@@ -89,9 +91,10 @@ export default function AdminProfilePage() {
     try {
       await setDoc(doc(db, "profile", "main"), formData);
       toast.success("Profile updated successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Failed to save: ${err.message}`);
+      toast.error(`Failed to save: ${msg}`);
     } finally {
       setSaving(false);
     }

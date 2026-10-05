@@ -15,10 +15,12 @@ import {
   Share2,
   LogOut,
   LayoutDashboard,
+  Newspaper,
 } from "lucide-react";
 
 const navigationItems = [
   { name: "Overview", href: "/admin", icon: LayoutDashboard },
+  { name: "Updates", href: "/admin/updates", icon: Newspaper },
   { name: "Profile", href: "/admin/profile", icon: User },
   { name: "Education", href: "/admin/education", icon: GraduationCap },
   { name: "Experience", href: "/admin/experience", icon: Briefcase },

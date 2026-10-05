@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { doc, addDoc, updateDoc, deleteDoc, collection } from "firebase/firestore";
 import type { ClassItem } from "@/lib/data";
 import toast from "react-hot-toast";
-import { Save, X, Plus, Edit2, Trash, ArrowUp, ArrowDown } from "lucide-react";
+import { Save, X, Edit2, Trash, ArrowUp, ArrowDown } from "lucide-react";
 
 export default function AdminClassesPage() {
   const { data: classes, loading } = useFirestoreCollection<ClassItem>("classes");
@@ -56,9 +56,10 @@ export default function AdminClassesPage() {
         toast.success("Class entry added!");
       }
       resetForm();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${msg}`);
     } finally {
       setFormLoading(false);
     }
@@ -69,9 +70,10 @@ export default function AdminClassesPage() {
     try {
       await deleteDoc(doc(db, "classes", id));
       toast.success("Class entry deleted!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${msg}`);
     }
   };
 
@@ -86,9 +88,10 @@ export default function AdminClassesPage() {
       await updateDoc(doc(db, "classes", itemA.id), { order: itemB.order });
       await updateDoc(doc(db, "classes", itemB.id), { order: itemA.order });
       toast.success("Order updated!");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Failed to reorder: ${err.message}`);
+      toast.error(`Failed to reorder: ${msg}`);
     }
   };
 

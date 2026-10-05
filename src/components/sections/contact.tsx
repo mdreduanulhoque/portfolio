@@ -36,11 +36,11 @@ export function ContactSection() {
                         ./ping_me.sh
                     </div>
                     <h2 className="text-3xl font-bold tracking-tight font-lora sm:text-5xl relative inline-block">
-                        Let's Connect
+                        Let&apos;s Connect
                         <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
                     </h2>
                     <p className="text-muted-foreground mt-4 max-w-2xl leading-relaxed">
-                        I'm always open to discussing tech, sharing ideas, or exploring opportunities. Feel free to reach out to me through any of the channels below.
+                        I&apos;m always open to discussing tech, sharing ideas, or exploring opportunities. Feel free to reach out to me through any of the channels below.
                     </p>
                 </div>
 

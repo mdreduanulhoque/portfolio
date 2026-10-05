@@ -88,7 +88,7 @@ export function SkillsSection() {
                                     <div className="col-span-7 flex items-center gap-2">
                                         <FileJson className="w-4 h-4 text-emerald-500" />
                                         <span className="group-hover:text-emerald-400 transition-colors">{skill.name}</span>
-                                        <span className="text-xs text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity ml-4">// {skill.type}</span>
+                                        <span className="text-xs text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity ml-4">{"//"} {skill.type}</span>
                                     </div>
                                 </div>
                             ))}

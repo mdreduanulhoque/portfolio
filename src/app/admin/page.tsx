@@ -6,7 +6,8 @@ import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, writeBatch, collection } from "firebase/firestore";
-import type { Profile, Education, Experience, Achievement, Project, Skill, ClassItem, SocialLinks } from "@/lib/data";
+import type { Profile, Education, Experience, Achievement, Project, Skill, ClassItem, SocialLinks, BlogPost } from "@/lib/data";
+import { fallbackBlogPosts } from "@/lib/data";
 import {
   User,
   GraduationCap,
@@ -17,6 +18,8 @@ import {
   ArrowRight,
   Database,
   Loader2,
+  Newspaper,
+  Share2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -98,10 +101,12 @@ export default function AdminDashboardOverview() {
   const { data: projects } = useFirestoreCollection<Project>("projects");
   const { data: skills } = useFirestoreCollection<Skill>("skills");
   const { data: classes } = useFirestoreCollection<ClassItem>("classes");
+  const { data: updates } = useFirestoreCollection<BlogPost>("updates");
 
   const [seeding, setSeeding] = useState(false);
 
   const sections = [
+    { name: "Updates", count: updates.length, href: "/admin/updates", icon: Newspaper, desc: "Write, edit, and archive blog articles, thoughts, and updates." },
     { name: "Profile", count: profile ? 1 : 0, href: "/admin/profile", icon: User, desc: "Manage name, bio, philosophy, hobbies, and profile photo." },
     { name: "Education", count: edu.length, href: "/admin/education", icon: GraduationCap, desc: "Manage university, high school, degrees, and GPA info." },
     { name: "Experience", count: exp.length, href: "/admin/experience", icon: Briefcase, desc: "Manage roles, organizations, dates, and descriptions." },
@@ -109,6 +114,7 @@ export default function AdminDashboardOverview() {
     { name: "Projects", count: projects.length, href: "/admin/projects", icon: Code2, desc: "Manage coding projects, features, tech stack, and URLs." },
     { name: "Skills", count: skills.length, href: "/admin/skills", icon: BookOpen, desc: "Manage skills list, file size style, and categories." },
     { name: "Classes", count: classes.length, href: "/admin/classes", icon: BookOpen, desc: "Manage YouTube classes, descriptions, and video IDs." },
+    { name: "Social Links", count: socialLinks ? 1 : 0, href: "/admin/social-links", icon: Share2, desc: "Manage social profiles, email, and resume URLs." },
   ];
 
   const handleSeedDatabase = async () => {
@@ -128,51 +134,66 @@ export default function AdminDashboardOverview() {
       // Education
       fallbackEducation.forEach((item) => {
         const docRef = doc(collection(db, "education"));
-        const { id, ...data } = item;
+        const data = { ...item };
+        delete (data as { id?: string }).id;
         batch.set(docRef, data);
       });
 
       // Experience
       fallbackExperience.forEach((item) => {
         const docRef = doc(collection(db, "experience"));
-        const { id, ...data } = item;
+        const data = { ...item };
+        delete (data as { id?: string }).id;
         batch.set(docRef, data);
       });
 
       // Achievements
       fallbackAchievements.forEach((item) => {
         const docRef = doc(collection(db, "achievements"));
-        const { id, ...data } = item;
+        const data = { ...item };
+        delete (data as { id?: string }).id;
         batch.set(docRef, data);
       });
 
       // Projects
       fallbackProjects.forEach((item) => {
         const docRef = doc(collection(db, "projects"));
-        const { id, ...data } = item;
+        const data = { ...item };
+        delete (data as { id?: string }).id;
         batch.set(docRef, data);
       });
 
       // Skills
       fallbackSkills.forEach((item) => {
         const docRef = doc(collection(db, "skills"));
-        const { id, ...data } = item;
+        const data = { ...item };
+        delete (data as { id?: string }).id;
         batch.set(docRef, data);
       });
 
       // Classes
       fallbackClasses.forEach((item) => {
         const docRef = doc(collection(db, "classes"));
-        const { id, ...data } = item;
+        const data = { ...item };
+        delete (data as { id?: string }).id;
+        batch.set(docRef, data);
+      });
+
+      // Updates (Blog)
+      fallbackBlogPosts.forEach((item) => {
+        const docRef = doc(collection(db, "updates"));
+        const data = { ...item };
+        delete (data as { id?: string }).id;
         batch.set(docRef, data);
       });
 
       await batch.commit();
       toast.success("Database seeded successfully with default values!");
       window.location.reload();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Seeding failed: ${err.message}`);
+      toast.error(`Seeding failed: ${msg}`);
     } finally {
       setSeeding(false);
     }
@@ -228,7 +249,7 @@ export default function AdminDashboardOverview() {
           <div className="space-y-1">
             <h3 className="font-bold text-foreground font-lora text-lg">Database Setup & Seeding</h3>
             <p className="text-xs text-muted-foreground leading-relaxed font-sans">
-              If this is your first time deploying or launching the site on a new Firebase database, you can seed all standard content automatically. This matches your original hardcoded experience, education, projects, skills, and classes so you don't start with a blank portfolio.
+              If this is your first time deploying or launching the site on a new Firebase database, you can seed all standard content automatically. This matches your original hardcoded experience, education, projects, skills, and classes so you don&apos;t start with a blank portfolio.
             </p>
           </div>
         </div>

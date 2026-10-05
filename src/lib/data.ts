@@ -88,6 +88,20 @@ export interface SocialLinks {
   resumeUrl: string;
 }
 
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  coverImage?: string;
+  tags: string[];
+  isPublic: boolean;
+  readTimeMinutes: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Fetch Functions ──────────────────────────────────────────────────
 
 export async function getProfile(): Promise<Profile | null> {
@@ -159,3 +173,51 @@ export async function getSocialLinks(): Promise<SocialLinks | null> {
     return null;
   }
 }
+
+export const fallbackBlogPosts: BlogPost[] = [
+  {
+    id: "welcome-to-updates",
+    title: "Welcome to My Digital Archive: Learning, Building, and Teaching",
+    slug: "welcome-to-updates",
+    excerpt: "Why I built this personal archive, thoughts on engineering fundamentals, teaching as learning, and what to expect here.",
+    content: `# Welcome to My Digital Archive\n\nI built this space as a personal writing archive and blog. In computer science and engineering, things evolve rapidly—new frameworks, new models, and endless abstractions. Yet, the fundamentals remain timeless.\n\n> "Bro, we have one life. Why waste it? Let's follow the orders of God, make Him happy & pass innovations to the next generations."\n\n### Why Write?\nWriting forces clarity of thought. When you can articulate a complex concept simply, you truly understand it. Whether it's dissecting algorithmic edge cases, building web architectures, or sharing life philosophies, this is where I document the journey.\n\n![Workspace & Deep Work](https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80)\n\n### Video Breakdown & Teaching\nTeaching is one of the purest forms of learning. Here is one of my recent problem-solving sessions on Threads in Java:\n\nhttps://youtu.be/uobWZ7FA6XM\n\nStay tuned for more updates, technical deep-dives, and personal reflections!`,
+    coverImage: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80",
+    tags: ["Philosophy", "Engineering", "Teaching"],
+    isPublic: true,
+    readTimeMinutes: 3,
+    createdAt: new Date("2026-03-01T10:00:00Z").toISOString(),
+    updatedAt: new Date("2026-03-01T10:00:00Z").toISOString(),
+  },
+];
+
+export async function getBlogPosts(): Promise<BlogPost[]> {
+  try {
+    const q = query(collection(db, "updates"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      return fallbackBlogPosts;
+    }
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as BlogPost));
+  } catch (error) {
+    console.error("Error fetching blog posts:", error);
+    return fallbackBlogPosts;
+  }
+}
+
+export async function getBlogPostById(id: string): Promise<BlogPost | null> {
+  try {
+    const docRef = doc(db, "updates", id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as BlogPost;
+    }
+    // Check fallback
+    const fallback = fallbackBlogPosts.find((p) => p.id === id || p.slug === id);
+    return fallback || null;
+  } catch (error) {
+    console.error(`Error fetching post ${id}:`, error);
+    const fallback = fallbackBlogPosts.find((p) => p.id === id || p.slug === id);
+    return fallback || null;
+  }
+}
+
