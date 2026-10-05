@@ -24,7 +24,6 @@ export function Footer() {
                     <p className="text-sm leading-loose text-muted-foreground">
                         Built by{" "}
                         <span className="font-medium text-foreground">Reduanul Hoque</span>
-                        . Deep thinking, silent execution. 🥷🧠
                     </p>
                     <div className="flex items-center gap-4 justify-center">
                         <a

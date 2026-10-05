@@ -65,16 +65,11 @@ export function ProjectsSection() {
             <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-primary/5 blur-[100px] rounded-full pointer-events-none"></div>
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-                    <div className="space-y-4">
-                        <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm text-primary font-mono">
-                            ~/projects
-                        </div>
-                        <h2 className="text-3xl font-bold tracking-tight font-lora sm:text-5xl">Selected Works</h2>
+                <div className="flex flex-col items-start gap-4 mb-16">
+                    <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm text-primary font-mono">
+                        ~/projects
                     </div>
-                    <p className="text-muted-foreground max-w-sm md:text-right text-sm leading-relaxed">
-                        A collection of tools and games built combining logic, algorithms, and clean interfaces.
-                    </p>
+                    <h2 className="text-3xl font-bold tracking-tight font-lora sm:text-5xl">Selected Works</h2>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

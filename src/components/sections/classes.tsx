@@ -45,9 +45,6 @@ export function ClassesSection() {
                         ~/teaching/classes
                     </div>
                     <h2 className="text-3xl font-bold tracking-tight font-lora sm:text-5xl">Online Classes</h2>
-                    <p className="text-muted-foreground text-center max-w-2xl mt-4">
-                        Sharing my knowledge with the community. Here are some of my publicly available classes discussing core computer science concepts.
-                    </p>
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">

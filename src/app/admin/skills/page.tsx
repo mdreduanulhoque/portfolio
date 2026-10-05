@@ -91,6 +91,25 @@ export default function AdminSkillsPage() {
     }
   };
 
+  const seedMissingSkills = async () => {
+    const missing = [
+      { name: "Express.js", type: "Framework", size: "16 MB", order: 5.1 },
+      { name: "MySQL", type: "Database", size: "64 MB", order: 5.2 },
+      { name: "Python", type: "Language", size: "28 MB", order: 5.3 },
+    ];
+    try {
+      for (const item of missing) {
+        const exists = skills.some(s => s.name.toLowerCase().includes(item.name.toLowerCase().replace(".js", "")));
+        if (!exists) {
+          await addDoc(collection(db, "skills"), item);
+        }
+      }
+      toast.success("Added Express.js, MySQL, and Python to database!");
+    } catch (err) {
+      toast.error("Error adding to database: " + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -101,9 +120,18 @@ export default function AdminSkillsPage() {
 
   return (
     <div className="space-y-8 font-mono text-sm">
-      <div>
-        <h1 className="text-3xl font-bold font-lora text-foreground">Skills Manager</h1>
-        <p className="text-muted-foreground font-mono text-xs mt-1">Configure installed skills in your terminal UI.</p>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold font-lora text-foreground">Skills Manager</h1>
+          <p className="text-muted-foreground font-mono text-xs mt-1">Configure installed skills in your terminal UI.</p>
+        </div>
+        <button
+          type="button"
+          onClick={seedMissingSkills}
+          className="px-3.5 py-2 text-xs font-mono font-medium rounded-xl border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+        >
+          + Seed Express, MySQL & Python to Database
+        </button>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
