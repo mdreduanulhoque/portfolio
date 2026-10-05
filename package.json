@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy": "next build && firebase deploy",
+    "deploy:hosting": "next build && firebase deploy --only hosting"
   },
   "dependencies": {
     "@next/third-parties": "^16.1.6",
