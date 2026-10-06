@@ -11,10 +11,8 @@ import {
   Clock,
   Lock,
   Globe,
-  PenSquare,
   ArrowRight,
   BookOpen,
-  Sparkles,
 } from "lucide-react";
 
 export default function UpdatesPage() {
@@ -80,28 +78,6 @@ export default function UpdatesPage() {
         <h1 className="text-4xl sm:text-5xl font-bold font-lora text-foreground tracking-tight">
           Updates & Writings
         </h1>
-        <p className="text-muted-foreground text-base sm:text-lg font-sans max-w-2xl leading-relaxed">
-          A personal archive of technical explorations, computer science fundamentals, engineering journals, and reflections.
-        </p>
-
-        {/* Admin status pill if logged in */}
-        {user && (
-          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-primary/20 bg-primary/5">
-            <div className="flex items-center gap-2 text-xs font-mono text-primary">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span>
-                <strong>Admin Mode Active:</strong> You can see both public & private archive entries.
-              </span>
-            </div>
-            <Link
-              href="/admin/updates"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-mono font-medium hover:bg-primary/90 transition-colors"
-            >
-              <PenSquare className="w-3.5 h-3.5" />
-              Manage Posts
-            </Link>
-          </div>
-        )}
       </div>
 
       {/* Search & Tag Filter Bar */}
