@@ -23,7 +23,7 @@ export function Footer() {
                 <div className="flex flex-col items-center justify-center gap-6 text-center">
                     <p className="text-sm leading-loose text-muted-foreground">
                         Built by{" "}
-                        <span className="font-medium text-foreground">Reduanul Hoque</span>
+                        <span className="font-medium text-foreground">MD Reduanul Hoque</span>
                     </p>
                     <div className="flex items-center gap-4 justify-center">
                         <a

@@ -198,7 +198,7 @@ export function HeroSection() {
                                 <span className="text-pink-500">➜</span> <span className="text-cyan-400">~</span> whoami
                             </div>
                             <div className="text-slate-300">
-                                {p.name.split(" ").slice(-2).join(" ")} | Developer &amp; Educator
+                                {p.name} | Developer &amp; Educator
                             </div>
                             <div className="text-emerald-400">
                                 <span className="text-pink-500">➜</span> <span className="text-cyan-400">~</span> cat status.txt
