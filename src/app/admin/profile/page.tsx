@@ -87,7 +87,9 @@ export default function AdminProfilePage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Image upload failed: ${msg}`);
+      toast.error(
+        "Firebase Storage is not enabled on this project. Please paste a direct image URL below instead!"
+      );
     } finally {
       setImgUploading(false);
       e.target.value = "";
@@ -128,7 +130,9 @@ export default function AdminProfilePage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Resume upload failed: ${msg}`);
+      toast.error(
+        "Firebase Storage is not enabled on this project. Please paste a direct CV/Resume URL below instead!"
+      );
     } finally {
       setDocUploading(false);
       e.target.value = "";
@@ -310,31 +314,10 @@ export default function AdminProfilePage() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs font-bold">
-                    {imgUploading ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    ) : (
-                      <Upload className="w-4 h-4 text-primary" />
-                    )}
-                    {imgUploading ? "Uploading..." : "Upload Photo"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      disabled={imgUploading}
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <span className="text-[10px] text-muted-foreground leading-tight">
-                    PNG, JPG, or WebP (max 5MB)
-                  </span>
-                </div>
-
-                <div className="space-y-1 pt-1">
+              <div className="space-y-3">
+                <div className="space-y-1">
                   <label className="text-[10px] text-muted-foreground uppercase font-bold">
-                    Or Direct Photo URL
+                    Profile Photo URL
                   </label>
                   <input
                     type="text"
@@ -344,6 +327,35 @@ export default function AdminProfilePage() {
                     placeholder="https://... or /Formal.jpg"
                     className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none focus:border-primary"
                   />
+                  <p className="text-[10px] text-muted-foreground">
+                    Supports any public image URL (Imgur, GitHub, Google Drive, Cloudinary) or local /Formal.jpg.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-border/30">
+                  <span className="text-[10px] text-muted-foreground block mb-1.5 font-bold uppercase">
+                    Optional: Upload File (Firebase Storage)
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs font-bold">
+                      {imgUploading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                      ) : (
+                        <Upload className="w-3.5 h-3.5 text-primary" />
+                      )}
+                      {imgUploading ? "Uploading..." : "Upload Photo"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={imgUploading}
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="text-[10px] text-muted-foreground">
+                      Max 5MB
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -352,7 +364,7 @@ export default function AdminProfilePage() {
             <div className="p-6 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm space-y-4">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-muted-foreground uppercase block">
-                  Curriculum Vitae (CV) / Resume
+                  Curriculum Vitae (CV) / Resume Link
                 </label>
                 {formData.resumeUrl && (
                   <a
@@ -387,30 +399,9 @@ export default function AdminProfilePage() {
               )}
 
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs font-bold shadow-xs">
-                    {docUploading ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    ) : (
-                      <Upload className="w-4 h-4 text-primary" />
-                    )}
-                    {docUploading ? "Uploading & Saving..." : "Upload New PDF"}
-                    <input
-                      type="file"
-                      accept=".pdf,application/pdf"
-                      disabled={docUploading}
-                      onChange={handleResumeUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <span className="text-[10px] text-muted-foreground leading-tight">
-                    PDF document (max 10MB) &bull; Auto-saves on upload
-                  </span>
-                </div>
-
                 <div className="space-y-1">
                   <label className="text-[10px] text-muted-foreground uppercase font-bold">
-                    Or Direct CV / Resume Link
+                    CV / Resume URL
                   </label>
                   <input
                     type="text"
@@ -421,8 +412,34 @@ export default function AdminProfilePage() {
                     className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none focus:border-primary font-mono"
                   />
                   <p className="text-[10px] text-muted-foreground">
-                    Connected across the entire portfolio (Navbar, Hero section, and Contact links).
+                    Supports any public document URL (Google Drive, Dropbox, OneDrive, GitHub) or local PDF in public folder. Connected globally across Navbar, Hero, and Contact links.
                   </p>
+                </div>
+
+                <div className="pt-2 border-t border-border/30">
+                  <span className="text-[10px] text-muted-foreground block mb-1.5 font-bold uppercase">
+                    Optional: Upload PDF File (Firebase Storage)
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs font-bold shadow-xs">
+                      {docUploading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                      ) : (
+                        <Upload className="w-3.5 h-3.5 text-primary" />
+                      )}
+                      {docUploading ? "Uploading..." : "Upload PDF"}
+                      <input
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        disabled={docUploading}
+                        onChange={handleResumeUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="text-[10px] text-muted-foreground">
+                      Max 10MB
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
