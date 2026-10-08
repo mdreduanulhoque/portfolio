@@ -7,7 +7,18 @@ import { db, storage } from "@/lib/firebase";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import type { Profile } from "@/lib/data";
 import toast from "react-hot-toast";
-import { Save, Upload, FileText, Sparkles, Plus, Trash } from "lucide-react";
+import {
+  Save,
+  Upload,
+  FileText,
+  Sparkles,
+  Plus,
+  Trash,
+  ExternalLink,
+  X,
+  Loader2,
+  CheckCircle,
+} from "lucide-react";
 
 export default function AdminProfilePage() {
   const { data: profile, loading } = useFirestoreDoc<Profile>("profile", "main");
@@ -40,7 +51,9 @@ export default function AdminProfilePage() {
     }
   }, [profile]);
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -48,40 +61,77 @@ export default function AdminProfilePage() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (PNG, JPG, WebP).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Profile image must be smaller than 5MB.");
+      return;
+    }
+
     setImgUploading(true);
 
     try {
-      const storageRef = ref(storage, `profile/profile_image_${Date.now()}_${file.name}`);
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const storageRef = ref(storage, `profile/profile_image_${Date.now()}_${safeName}`);
       const snapshot = await uploadBytes(storageRef, file);
       const url = await getDownloadURL(snapshot.ref);
+
+      // Update local state and auto-persist to Firestore
       setFormData((prev) => ({ ...prev, profileImageUrl: url }));
-      toast.success("Profile image uploaded successfully!");
+      await setDoc(doc(db, "profile", "main"), { profileImageUrl: url }, { merge: true });
+
+      toast.success("Profile image uploaded and saved to database!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
       toast.error(`Image upload failed: ${msg}`);
     } finally {
       setImgUploading(false);
+      e.target.value = "";
     }
   };
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Invalid file format. Please upload a PDF document (.pdf).");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Resume file size must be less than 10MB.");
+      return;
+    }
+
     setDocUploading(true);
 
     try {
-      const storageRef = ref(storage, `profile/resume_${Date.now()}_${file.name}`);
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const storageRef = ref(storage, `profile/resume_${Date.now()}_${safeName}`);
       const snapshot = await uploadBytes(storageRef, file);
       const url = await getDownloadURL(snapshot.ref);
+
+      // 1. Update local state
       setFormData((prev) => ({ ...prev, resumeUrl: url }));
-      toast.success("Resume uploaded successfully!");
+
+      // 2. Auto-persist directly to Firestore profile collection
+      await setDoc(doc(db, "profile", "main"), { resumeUrl: url }, { merge: true });
+
+      // 3. Keep social_links/main synchronized
+      await setDoc(doc(db, "social_links", "main"), { resumeUrl: url }, { merge: true });
+
+      toast.success("Resume uploaded and saved to database!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
       toast.error(`Resume upload failed: ${msg}`);
     } finally {
       setDocUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -89,8 +139,15 @@ export default function AdminProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await setDoc(doc(db, "profile", "main"), formData);
-      toast.success("Profile updated successfully!");
+      await setDoc(doc(db, "profile", "main"), formData, { merge: true });
+      if (formData.resumeUrl) {
+        await setDoc(
+          doc(db, "social_links", "main"),
+          { resumeUrl: formData.resumeUrl },
+          { merge: true }
+        );
+      }
+      toast.success("Profile saved successfully!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
@@ -125,12 +182,18 @@ export default function AdminProfilePage() {
   // Bio paragraph list management
   const addPara = () => {
     if (!newPara.trim()) return;
-    setFormData((prev) => ({ ...prev, philosophyParagraphs: [...prev.philosophyParagraphs, newPara.trim()] }));
+    setFormData((prev) => ({
+      ...prev,
+      philosophyParagraphs: [...prev.philosophyParagraphs, newPara.trim()],
+    }));
     setNewPara("");
   };
 
   const removePara = (idx: number) => {
-    setFormData((prev) => ({ ...prev, philosophyParagraphs: prev.philosophyParagraphs.filter((_, i) => i !== idx) }));
+    setFormData((prev) => ({
+      ...prev,
+      philosophyParagraphs: prev.philosophyParagraphs.filter((_, i) => i !== idx),
+    }));
   };
 
   if (loading) {
@@ -142,13 +205,15 @@ export default function AdminProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 font-mono">
       <div>
         <h1 className="text-3xl font-bold font-lora text-foreground">Profile Configuration</h1>
-        <p className="text-muted-foreground font-mono text-xs mt-1">Update global portfolio variables.</p>
+        <p className="text-muted-foreground text-xs mt-1">
+          Manage your global bio, credentials, profile photo, and public CV.
+        </p>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-8 font-mono text-sm">
+      <form onSubmit={handleSave} className="space-y-8 text-sm">
         {/* Main Grid */}
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-6">
@@ -215,45 +280,150 @@ export default function AdminProfilePage() {
 
           {/* Files/Images Column */}
           <div className="space-y-6">
-            {/* Profile image upload */}
+            {/* Profile image upload & URL */}
             <div className="p-6 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm space-y-4">
-              <label className="text-xs font-bold text-muted-foreground uppercase block">Profile Image</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block">
+                Profile Photo
+              </label>
+
               {formData.profileImageUrl && (
-                <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-border bg-muted">
-                  <img src={formData.profileImageUrl} alt="Preview" className="object-cover w-full h-full" />
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-border bg-muted shrink-0">
+                    <img
+                      src={formData.profileImageUrl}
+                      alt="Profile preview"
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <div className="text-emerald-500 font-bold flex items-center gap-1">
+                      <CheckCircle className="w-3.5 h-3.5" /> Photo Active
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, profileImageUrl: "" }))}
+                      className="text-muted-foreground hover:text-red-500 flex items-center gap-1 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" /> Remove
+                    </button>
+                  </div>
                 </div>
               )}
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs">
-                  <Upload className="w-4 h-4 text-primary" />
-                  {imgUploading ? "Uploading..." : "Select File"}
-                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                </label>
-                <span className="text-[10px] text-muted-foreground max-w-[150px] leading-tight">Will upload to Firebase Storage</span>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs font-bold">
+                    {imgUploading ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    ) : (
+                      <Upload className="w-4 h-4 text-primary" />
+                    )}
+                    {imgUploading ? "Uploading..." : "Upload Photo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={imgUploading}
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-[10px] text-muted-foreground leading-tight">
+                    PNG, JPG, or WebP (max 5MB)
+                  </span>
+                </div>
+
+                <div className="space-y-1 pt-1">
+                  <label className="text-[10px] text-muted-foreground uppercase font-bold">
+                    Or Direct Photo URL
+                  </label>
+                  <input
+                    type="text"
+                    name="profileImageUrl"
+                    value={formData.profileImageUrl}
+                    onChange={handleTextChange}
+                    placeholder="https://... or /Formal.jpg"
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none focus:border-primary"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Resume upload */}
+            {/* Resume / CV Section */}
             <div className="p-6 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm space-y-4">
-              <label className="text-xs font-bold text-muted-foreground uppercase block">Resume PDF</label>
-              {formData.resumeUrl && (
-                <a
-                  href={formData.resumeUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline"
-                >
-                  <FileText className="w-4 h-4" />
-                  View Current Resume
-                </a>
-              )}
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs">
-                  <Upload className="w-4 h-4 text-primary" />
-                  {docUploading ? "Uploading..." : "Select PDF"}
-                  <input type="file" accept=".pdf" onChange={handleResumeUpload} className="hidden" />
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-muted-foreground uppercase block">
+                  Curriculum Vitae (CV) / Resume
                 </label>
-                <span className="text-[10px] text-muted-foreground max-w-[150px] leading-tight">Will upload to Firebase Storage</span>
+                {formData.resumeUrl && (
+                  <a
+                    href={formData.resumeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Preview CV
+                  </a>
+                )}
+              </div>
+
+              {formData.resumeUrl && (
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 truncate mr-2">
+                    <FileText className="w-4 h-4 text-primary shrink-0" />
+                    <span className="truncate text-foreground font-mono">
+                      {formData.resumeUrl.split("/").pop()?.split("?")[0] || "Active CV"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, resumeUrl: "" }))}
+                    className="text-muted-foreground hover:text-red-500 cursor-pointer p-1"
+                    title="Remove Resume URL"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs font-bold shadow-xs">
+                    {docUploading ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    ) : (
+                      <Upload className="w-4 h-4 text-primary" />
+                    )}
+                    {docUploading ? "Uploading & Saving..." : "Upload New PDF"}
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      disabled={docUploading}
+                      onChange={handleResumeUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-[10px] text-muted-foreground leading-tight">
+                    PDF document (max 10MB) &bull; Auto-saves on upload
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-muted-foreground uppercase font-bold">
+                    Or Direct CV / Resume Link
+                  </label>
+                  <input
+                    type="text"
+                    name="resumeUrl"
+                    value={formData.resumeUrl}
+                    onChange={handleTextChange}
+                    placeholder="https://... or Google Drive link or /md_reduanul_hoque_resume.pdf"
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none focus:border-primary font-mono"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Connected across the entire portfolio (Navbar, Hero section, and Contact links).
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -268,9 +438,18 @@ export default function AdminProfilePage() {
             </h3>
             <div className="flex flex-wrap gap-2 mb-3">
               {formData.badges.map((badge, i) => (
-                <span key={i} className="flex items-center gap-1.5 px-3 py-1 bg-muted rounded-full border border-border/50 text-xs">
+                <span
+                  key={i}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-muted rounded-full border border-border/50 text-xs"
+                >
                   {badge}
-                  <button type="button" onClick={() => removeBadge(i)} className="text-muted-foreground hover:text-red-500 cursor-pointer">✕</button>
+                  <button
+                    type="button"
+                    onClick={() => removeBadge(i)}
+                    className="text-muted-foreground hover:text-red-500 cursor-pointer"
+                  >
+                    ✕
+                  </button>
                 </span>
               ))}
             </div>
@@ -280,9 +459,15 @@ export default function AdminProfilePage() {
                 placeholder="e.g. Computer Science Student"
                 value={newBadge}
                 onChange={(e) => setNewBadge(e.target.value)}
-                className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-card focus:outline-none"
+                className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-card focus:outline-none text-xs"
               />
-              <button type="button" onClick={addBadge} className="p-2 rounded-lg bg-primary text-white cursor-pointer"><Plus className="w-4 h-4" /></button>
+              <button
+                type="button"
+                onClick={addBadge}
+                className="p-2 rounded-lg bg-primary text-white cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -293,9 +478,18 @@ export default function AdminProfilePage() {
             </h3>
             <div className="flex flex-wrap gap-2 mb-3">
               {formData.hobbies.map((hobby, i) => (
-                <span key={i} className="flex items-center gap-1.5 px-3 py-1 bg-muted rounded-full border border-border/50 text-xs">
+                <span
+                  key={i}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-muted rounded-full border border-border/50 text-xs"
+                >
                   {hobby}
-                  <button type="button" onClick={() => removeHobby(i)} className="text-muted-foreground hover:text-red-500 cursor-pointer">✕</button>
+                  <button
+                    type="button"
+                    onClick={() => removeHobby(i)}
+                    className="text-muted-foreground hover:text-red-500 cursor-pointer"
+                  >
+                    ✕
+                  </button>
                 </span>
               ))}
             </div>
@@ -305,9 +499,15 @@ export default function AdminProfilePage() {
                 placeholder="e.g. Reading"
                 value={newHobby}
                 onChange={(e) => setNewHobby(e.target.value)}
-                className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-card focus:outline-none"
+                className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-card focus:outline-none text-xs"
               />
-              <button type="button" onClick={addHobby} className="p-2 rounded-lg bg-primary text-white cursor-pointer"><Plus className="w-4 h-4" /></button>
+              <button
+                type="button"
+                onClick={addHobby}
+                className="p-2 rounded-lg bg-primary text-white cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -315,7 +515,9 @@ export default function AdminProfilePage() {
         {/* Philosophy / Bio Paragraphs */}
         <div className="border-t border-border/40 pt-8 space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-muted-foreground uppercase block">Philosophy Paragraphs (About Section)</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase block">
+              Philosophy Paragraphs (About Section)
+            </label>
             <input
               type="text"
               name="philosophyTitle"
@@ -328,7 +530,10 @@ export default function AdminProfilePage() {
 
           <div className="space-y-3">
             {formData.philosophyParagraphs.map((para, i) => (
-              <div key={i} className="p-4 rounded-xl bg-muted/30 border border-border/40 flex items-start gap-4 justify-between font-sans leading-relaxed">
+              <div
+                key={i}
+                className="p-4 rounded-xl bg-muted/30 border border-border/40 flex items-start gap-4 justify-between font-sans leading-relaxed"
+              >
                 <p className="flex-1 text-sm">{para}</p>
                 <button
                   type="button"
@@ -366,8 +571,17 @@ export default function AdminProfilePage() {
             disabled={saving || imgUploading || docUploading}
             className="px-6 py-3 rounded-lg bg-primary hover:bg-primary/95 text-white font-bold text-sm tracking-wide transition-all shadow-lg hover:shadow-primary/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="w-4 h-4" />
-            {saving ? "Saving Changes..." : "Save Profile"}
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving Changes...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Profile
+              </>
+            )}
           </button>
         </div>
       </form>

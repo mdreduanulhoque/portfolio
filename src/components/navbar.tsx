@@ -4,11 +4,21 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
+import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
+import type { Profile } from "@/lib/data";
 
 export function Navbar() {
     const pathname = usePathname();
+    const { data: profile } = useFirestoreDoc<Profile>("profile", "main");
+
+    // Do not render public navbar on admin pages
+    if (pathname?.startsWith("/admin")) {
+        return null;
+    }
+
     const isHome = pathname === "/";
-    const isUpdates = pathname.startsWith("/updates");
+    const isUpdates = pathname?.startsWith("/updates") ?? false;
+    const resumeUrl = profile?.resumeUrl || "/md_reduanul_hoque_resume.pdf";
 
     const getSectionHref = (hash: string) => {
         return isHome ? hash : `/${hash}`;
@@ -43,7 +53,9 @@ export function Navbar() {
                     <div className="flex items-center gap-4">
                         <ThemeToggle />
                         <a
-                            href="/md_reduanul_hoque_resume.pdf"
+                            href={resumeUrl}
+                            target="_blank"
+                            rel="noreferrer"
                             download
                             className="hidden sm:inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                         >

@@ -133,7 +133,7 @@ export default function AdminDashboardOverview() {
 
       // Education
       fallbackEducation.forEach((item) => {
-        const docRef = doc(collection(db, "education"));
+        const docRef = doc(db, "education", item.id);
         const data = { ...item };
         delete (data as { id?: string }).id;
         batch.set(docRef, data);
@@ -141,7 +141,7 @@ export default function AdminDashboardOverview() {
 
       // Experience
       fallbackExperience.forEach((item) => {
-        const docRef = doc(collection(db, "experience"));
+        const docRef = doc(db, "experience", item.id);
         const data = { ...item };
         delete (data as { id?: string }).id;
         batch.set(docRef, data);
@@ -149,7 +149,7 @@ export default function AdminDashboardOverview() {
 
       // Achievements
       fallbackAchievements.forEach((item) => {
-        const docRef = doc(collection(db, "achievements"));
+        const docRef = doc(db, "achievements", item.id);
         const data = { ...item };
         delete (data as { id?: string }).id;
         batch.set(docRef, data);
@@ -157,7 +157,7 @@ export default function AdminDashboardOverview() {
 
       // Projects
       fallbackProjects.forEach((item) => {
-        const docRef = doc(collection(db, "projects"));
+        const docRef = doc(db, "projects", item.id);
         const data = { ...item };
         delete (data as { id?: string }).id;
         batch.set(docRef, data);
@@ -165,7 +165,7 @@ export default function AdminDashboardOverview() {
 
       // Skills
       fallbackSkills.forEach((item) => {
-        const docRef = doc(collection(db, "skills"));
+        const docRef = doc(db, "skills", item.id);
         const data = { ...item };
         delete (data as { id?: string }).id;
         batch.set(docRef, data);
@@ -173,7 +173,7 @@ export default function AdminDashboardOverview() {
 
       // Classes
       fallbackClasses.forEach((item) => {
-        const docRef = doc(collection(db, "classes"));
+        const docRef = doc(db, "classes", item.id);
         const data = { ...item };
         delete (data as { id?: string }).id;
         batch.set(docRef, data);
@@ -181,7 +181,7 @@ export default function AdminDashboardOverview() {
 
       // Updates (Blog)
       fallbackBlogPosts.forEach((item) => {
-        const docRef = doc(collection(db, "updates"));
+        const docRef = doc(db, "updates", item.id);
         const data = { ...item };
         delete (data as { id?: string }).id;
         batch.set(docRef, data);

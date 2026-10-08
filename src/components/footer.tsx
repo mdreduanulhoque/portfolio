@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import { Github, Linkedin, Mail } from "lucide-react";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import type { SocialLinks } from "@/lib/data";
@@ -14,7 +15,14 @@ const fallbackLinks: SocialLinks = {
 };
 
 export function Footer() {
+    const pathname = usePathname();
     const { data: links } = useFirestoreDoc<SocialLinks>("social_links", "main");
+
+    // Do not render public footer on admin pages
+    if (pathname?.startsWith("/admin")) {
+        return null;
+    }
+
     const l = links || fallbackLinks;
 
     return (

@@ -14,6 +14,7 @@ interface UseFirestoreCollectionOptions {
   orderByField?: string;
   orderDirection?: "asc" | "desc";
   realtime?: boolean;
+  constraints?: QueryConstraint[];
 }
 
 export function useFirestoreCollection<T>(
@@ -27,6 +28,7 @@ export function useFirestoreCollection<T>(
     orderByField = defaultOrderBy,
     orderDirection = defaultDirection,
     realtime = true,
+    constraints: customConstraints = [],
   } = options;
 
   const [data, setData] = useState<T[]>([]);
@@ -36,12 +38,12 @@ export function useFirestoreCollection<T>(
   useEffect(() => {
     let unsubscribe: () => void = () => {};
 
-    const constraints: QueryConstraint[] = [];
+    const queryConstraints: QueryConstraint[] = [...customConstraints];
     if (orderByField) {
-      constraints.push(orderBy(orderByField, orderDirection));
+      queryConstraints.push(orderBy(orderByField, orderDirection));
     }
 
-    const q = query(collection(db, collectionName), ...constraints);
+    const q = query(collection(db, collectionName), ...queryConstraints);
 
     unsubscribe = onSnapshot(
       q,
@@ -53,9 +55,11 @@ export function useFirestoreCollection<T>(
         setLoading(false);
       },
       (err) => {
-        console.warn(`Query with orderBy on "${collectionName}" had an issue: ${err.message}. Retrying without orderBy.`);
-        // Fallback: listen without orderBy so no documents are ever lost
-        const fallbackQ = query(collection(db, collectionName));
+        console.warn(
+          `Query with orderBy on "${collectionName}" had an issue: ${err.message}. Retrying with base constraints.`
+        );
+        // Fallback: listen with custom constraints only so documents are not lost due to orderBy
+        const fallbackQ = query(collection(db, collectionName), ...customConstraints);
         unsubscribe = onSnapshot(
           fallbackQ,
           (snapshot) => {
@@ -75,7 +79,7 @@ export function useFirestoreCollection<T>(
     );
 
     return () => unsubscribe();
-  }, [collectionName, orderByField, orderDirection, realtime]);
+  }, [collectionName, orderByField, orderDirection, realtime, JSON.stringify(customConstraints.map(c => c.type))]);
 
   return { data, loading, error, setData };
 }

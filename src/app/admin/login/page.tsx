@@ -7,7 +7,7 @@ import { Terminal, KeyRound, Mail, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function AdminLoginPage() {
-  const { user, signIn, loading } = useAuth();
+  const { user, signIn, signOut, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -16,10 +16,10 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user && !loading) {
+    if (user && !loading && isAdmin) {
       router.push("/admin");
     }
-  }, [user, loading, router]);
+  }, [user, loading, isAdmin, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +28,15 @@ export default function AdminLoginPage() {
 
     try {
       await signIn(email, password);
+      const adminUid = process.env.NEXT_PUBLIC_ADMIN_UID;
+      // Re-check UID immediately after signIn
+      const currentUser = (await import("@/lib/firebase")).auth.currentUser;
+      if (currentUser && adminUid && currentUser.uid !== adminUid) {
+        await signOut();
+        setError("Access Denied: This account is not an authorized administrator.");
+        toast.error("Unauthorized account.");
+        return;
+      }
       toast.success("Welcome back, commander.");
       router.push("/admin");
     } catch (err: unknown) {

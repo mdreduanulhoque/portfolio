@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { useAuth } from "@/lib/auth-context";
+import { where } from "firebase/firestore";
 import { BlogPost, fallbackBlogPosts } from "@/lib/data";
 import {
   Search,
@@ -16,8 +17,14 @@ import {
 } from "lucide-react";
 
 export default function UpdatesPage() {
-  const { user } = useAuth();
-  const { data: postsFromDb, loading } = useFirestoreCollection<BlogPost>("updates");
+  const { user, isAdmin } = useAuth();
+  const queryConstraints = useMemo(() => {
+    return user && isAdmin ? [] : [where("isPublic", "==", true)];
+  }, [user, isAdmin]);
+
+  const { data: postsFromDb, loading } = useFirestoreCollection<BlogPost>("updates", {
+    constraints: queryConstraints,
+  });
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string>("All");

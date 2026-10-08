@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 interface UseFirestoreDocOptions {
@@ -13,51 +13,60 @@ export function useFirestoreDoc<T>(
   documentId: string,
   options: UseFirestoreDocOptions = {}
 ) {
-  const { realtime = false } = options;
+  const { realtime = true } = options;
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const docRef = doc(db, collectionName, documentId);
 
     if (realtime) {
       const unsubscribe = onSnapshot(
         docRef,
         (snapshot) => {
+          if (!isMounted) return;
           if (snapshot.exists()) {
-            setData(snapshot.data() as T);
+            setData({ id: snapshot.id, ...snapshot.data() } as T);
           } else {
             setData(null);
           }
           setLoading(false);
         },
         (err) => {
+          if (!isMounted) return;
           console.error(`Error in ${collectionName}/${documentId} listener:`, err);
           setError(err.message);
           setLoading(false);
         }
       );
-      return () => unsubscribe();
+
+      return () => {
+        isMounted = false;
+        unsubscribe();
+      };
     } else {
-      const unsubscribe = onSnapshot(
-        docRef,
-        (snapshot) => {
+      getDoc(docRef)
+        .then((snapshot) => {
+          if (!isMounted) return;
           if (snapshot.exists()) {
-            setData(snapshot.data() as T);
+            setData({ id: snapshot.id, ...snapshot.data() } as T);
           } else {
             setData(null);
           }
           setLoading(false);
-          unsubscribe();
-        },
-        (err) => {
+        })
+        .catch((err) => {
+          if (!isMounted) return;
           console.error(`Error fetching ${collectionName}/${documentId}:`, err);
           setError(err.message);
           setLoading(false);
-        }
-      );
-      return () => unsubscribe();
+        });
+
+      return () => {
+        isMounted = false;
+      };
     }
   }, [collectionName, documentId, realtime]);
 

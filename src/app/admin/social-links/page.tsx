@@ -35,7 +35,14 @@ export default function AdminSocialLinksPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await setDoc(doc(db, "social_links", "main"), formData);
+      await setDoc(doc(db, "social_links", "main"), formData, { merge: true });
+      if (formData.resumeUrl) {
+        await setDoc(
+          doc(db, "profile", "main"),
+          { resumeUrl: formData.resumeUrl },
+          { merge: true }
+        );
+      }
       toast.success("Social links updated successfully!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
