@@ -20,8 +20,9 @@
 # production
 /build
 
-# misc
+# misc & OS
 .DS_Store
+Thumbs.db
 *.pem
 
 # debug
@@ -32,16 +33,31 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
 
 # typescript
-40: *.tsbuildinfo
-41: next-env.d.ts
-42: 
-43: # firebase
-44: .firebase/
-45: 
-46: # misc
-47: build_output.txt
+*.tsbuildinfo
+next-env.d.ts
+
+# firebase
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# build artifacts & temp files
+build_output.txt
+*.log
+
+# editor & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# AI / agent cache
+.agents/
+.gemini/
