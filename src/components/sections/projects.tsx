@@ -4,36 +4,9 @@ import * as React from "react";
 import { ExternalLink, Github, Code, CheckCircle2, ChevronRight } from "lucide-react";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { Project } from "@/lib/data";
+import { fallbackProjects } from "@/lib/data";
 
-const fallbackProjects: Project[] = [
-    {
-        id: "1", title: "Simon Game",
-        description: "A classic colorful memory game. Features interactive buttons, sound effects, full responsiveness, and game over animations.",
-        techStack: ["HTML5", "CSS3", "JS (ES6)", "jQuery"],
-        liveLink: "https://mdreduanulhoque.github.io/SimonGame/",
-        githubLink: "https://github.com/mdreduanulhoque/SimonGame",
-        features: ["Colorful interactive buttons", "Sound effects for each color", "Game Over animation"],
-        order: 0,
-    },
-    {
-        id: "2", title: "Vibe Chess",
-        description: "A relaxing, timer-based chess variant. Games end when the 5-minute timer expires, winner determined by territorial control.",
-        techStack: ["Vanilla JS", "HTML5", "CSS3"],
-        liveLink: "https://mdreduanulhoque.github.io/vibe-chess/",
-        githubLink: "https://github.com/mdreduanulhoque/vibe-chess",
-        features: ["Territorial Victory System", "Relaxing Design & Animations", "Smart 5-minute Timer display"],
-        order: 1,
-    },
-    {
-        id: "3", title: "Array Memory Visualizer",
-        description: "A visualization tool for Array Memory Mapping. Shows grid generation, step-by-step calculations, and major mapping.",
-        techStack: ["JavaScript", "HTML", "CSS"],
-        liveLink: "https://mdreduanulhoque.github.io/Array-Memory-Mapping/",
-        githubLink: "https://github.com/mdreduanulhoque/Array-Memory-Mapping",
-        features: ["Dynamic grid generation", "Row/Column Major mapping", "Formula calculation steps"],
-        order: 2,
-    },
-];
+
 
 function ProjectsSkeleton() {
     return (
@@ -143,3 +116,4 @@ export function ProjectsSection() {
         </section>
     );
 }
+

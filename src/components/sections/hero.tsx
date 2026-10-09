@@ -6,20 +6,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import type { Profile } from "@/lib/data";
+import { fallbackProfile } from "@/lib/data";
 
-const fallbackProfile: Profile = {
-    name: "MD REDUANUL HOQUE",
-    tagline: "\"Bro, we have one life. Why waste it? Let's follow the orders of God, make Him happy & pass innovations to the next generations.\"",
-    badges: ["Computer Science Student", "Educator"],
-    location: "Dhaka, Bangladesh",
-    eduStatus: "5th Trimester B.Sc. in CSE @ UIU",
-    statusLine: "Learning, Building, Teaching...",
-    hobbies: ["Reading", "Football", "Gaming", "☕"],
-    philosophyTitle: "The Philosophy",
-    philosophyParagraphs: [],
-    profileImageUrl: "/Formal.jpg",
-    resumeUrl: "/md_reduanul_hoque_resume.pdf",
-};
+
 
 function HeroSkeleton() {
     return (
@@ -219,3 +208,4 @@ export function HeroSection() {
         </section>
     );
 }
+

@@ -5,14 +5,9 @@ import { usePathname } from "next/navigation";
 import { Github, Linkedin, Mail } from "lucide-react";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import type { SocialLinks } from "@/lib/data";
+import { fallbackSocialLinks as fallbackLinks } from "@/lib/data";
 
-const fallbackLinks: SocialLinks = {
-    email: "mdreduanulhoquesadik@gmail.com",
-    linkedin: "https://www.linkedin.com/in/md-reduanul-hoque-/",
-    github: "https://github.com/mdreduanulhoque",
-    facebook: "https://www.facebook.com/reduan.sadik.9",
-    resumeUrl: "/md_reduanul_hoque_resume.pdf",
-};
+
 
 export function Footer() {
     const pathname = usePathname();
@@ -65,3 +60,4 @@ export function Footer() {
         </footer>
     );
 }
+

@@ -5,12 +5,9 @@ import { Youtube, PlayCircle } from "lucide-react";
 import Image from "next/image";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { ClassItem } from "@/lib/data";
+import { fallbackClasses } from "@/lib/data";
 
-const fallbackClasses: ClassItem[] = [
-    { id: "1", title: "Thread in Java || Question Solve || OOP", videoId: "uobWZ7FA6XM", description: "A detailed problem-solving session covering Threads in Object-Oriented Programming.", url: "https://youtu.be/uobWZ7FA6XM?si=87TNoOs94kpDdL2S", order: 0 },
-    { id: "2", title: "GUI - Design Part in Java", videoId: "Rs6k1PNkVf4", description: "A comprehensive guide on designing Graphical User Interfaces (GUI) in Java.", url: "https://youtu.be/Rs6k1PNkVf4?si=nMWrT2wIJMuSGoRP", order: 1 },
-    { id: "3", title: "ICS One Shot Class For Mid", videoId: "GWtQ2FKl6ks", description: "A complete one-shot review class designed to prepare students for the Introduction to Computer Systems (ICS) midterm.", url: "https://youtu.be/GWtQ2FKl6ks?si=scAGxTYf92YBeWY-", order: 2 },
-];
+
 
 function ClassesSkeleton() {
     return (
@@ -88,3 +85,4 @@ export function ClassesSection() {
         </section>
     );
 }
+

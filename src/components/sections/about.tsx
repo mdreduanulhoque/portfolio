@@ -5,24 +5,13 @@ import { GraduationCap, Briefcase, BookOpen, Trophy, Heart } from "lucide-react"
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { Profile, Education, Experience, Achievement } from "@/lib/data";
+import { fallbackEducation, fallbackExperience, fallbackAchievements } from "@/lib/data";
 
-const fallbackEducation: Education[] = [
-    { id: "1", institution: "United International University", period: "Present (5th Trimester)", degree: "B.Sc. in Computer Science & Engineering", grade: "CGPA: 3.90/4.00", isCurrent: true, order: 0 },
-    { id: "2", institution: "Gurudayal Govt College", period: "2023 - 2024", degree: "HSC - Science Group", grade: "GPA: 5.00/5.00", isCurrent: false, order: 1 },
-    { id: "3", institution: "Kishoreganj Govt Boys High School", period: "2021 - 2022", degree: "SSC - Science Group", grade: "GPA: 5.00/5.00", isCurrent: false, order: 2 },
-];
 
-const fallbackExperience: Experience[] = [
-    { id: "1", role: "Volunteer", organization: "UIU CPC", period: "2025 - Present", description: "Organizing contests & mentoring junior students in algorithmic problem-solving.", isCurrent: true, order: 0 },
-    { id: "2", role: "Course Instructor", organization: "NovoNex", period: "2024 - Present", description: "Mentoring in Intro to Computing, C Programming & OOP.", isCurrent: true, order: 1 },
-    { id: "3", role: "General Member", organization: "UIU Computer Club", period: "2024 - Present", description: "Project management and team collaboration for club events.", isCurrent: true, order: 2 },
-    { id: "4", role: "Science Teacher", organization: "IHT Study Point", period: "2023 - Present", description: "Mentoring 500+ students in Physics, Chemistry & Biology.", isCurrent: true, order: 3 },
-];
 
-const fallbackAchievements: Achievement[] = [
-    { id: "1", title: "1st Runner-up", subtitle: "at Phitron X App Forum: KickStart Contest", emoji: "🏆", order: 0 },
-    { id: "2", title: "8th Runner-up & Bronze Medalist", subtitle: "at \"BeatCode 253\"", emoji: "🥉", order: 1 },
-];
+
+
+
 
 function AboutSkeleton() {
     return (
@@ -170,3 +159,6 @@ export function AboutSection() {
         </section>
     );
 }
+
+
+

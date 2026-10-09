@@ -4,6 +4,7 @@ import * as React from "react";
 import { useMemo } from "react";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { Skill } from "@/lib/data";
+import { fallbackSkills } from "@/lib/data";
 import {
   Code2,
   Cpu,
@@ -12,22 +13,7 @@ import {
   BookOpen,
 } from "lucide-react";
 
-const fallbackSkills: Skill[] = [
-  { id: "1", name: "HTML5", type: "Core", size: "124 KB", order: 0 },
-  { id: "2", name: "CSS3", type: "Core", size: "256 KB", order: 1 },
-  { id: "3", name: "Tailwind CSS", type: "Framework", size: "8.4 MB", order: 2 },
-  { id: "4", name: "JavaScript", type: "Language", size: "4.2 MB", order: 3 },
-  { id: "5", name: "jQuery", type: "Library", size: "88 KB", order: 4 },
-  { id: "6", name: "Node.js", type: "Runtime", size: "32 MB", order: 5 },
-  { id: "7", name: "Express.js", type: "Framework", size: "16 MB", order: 5.1 },
-  { id: "8", name: "MySQL", type: "Database", size: "64 MB", order: 5.2 },
-  { id: "9", name: "Python", type: "Language", size: "28 MB", order: 5.3 },
-  { id: "10", name: "C Language", type: "Language", size: "1.1 MB", order: 6 },
-  { id: "11", name: "C++", type: "Language", size: "2.4 MB", order: 7 },
-  { id: "12", name: "WordPress", type: "CMS", size: "64 MB", order: 8 },
-  { id: "13", name: "Canva", type: "Design", size: "12 MB", order: 9 },
-  { id: "14", name: "MS Office Suite", type: "Tools", size: "1.2 GB", order: 10 },
-];
+
 
 // Helper to format generic, clean skill names
 function cleanSkillName(raw: string): string {
@@ -428,3 +414,4 @@ export function SkillsSection() {
     </section>
   );
 }
+
