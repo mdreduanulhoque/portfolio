@@ -61,3 +61,6 @@ build_output.txt
 # AI / agent cache
 .agents/
 .gemini/
+
+
+rules.md

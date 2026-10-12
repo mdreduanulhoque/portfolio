@@ -18,8 +18,19 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://reduanulhoque.web.app"),
   title: "MD REDUANUL HOQUE - Portfolio",
   description: "Computer Science and Engineering student portfolio. Exploring modern web technologies, algorithms, and deep thinking.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "MD REDUANUL HOQUE - Portfolio",
+    description: "Computer Science and Engineering student portfolio. Exploring modern web technologies, algorithms, and deep thinking.",
+    url: "https://reduanulhoque.web.app",
+    siteName: "MD REDUANUL HOQUE - Portfolio",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -33,8 +44,8 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
           >
             <Navbar />
             <main className="flex-1">{children}</main>
