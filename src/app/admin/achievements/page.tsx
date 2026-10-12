@@ -5,6 +5,7 @@ import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { db } from "@/lib/firebase";
 import { doc, addDoc, updateDoc, deleteDoc, collection } from "firebase/firestore";
 import type { Achievement } from "@/lib/data";
+import { swapCollectionOrder } from "@/lib/data";
 import toast from "react-hot-toast";
 import { Save, X, Edit2, Trash, ArrowUp, ArrowDown } from "lucide-react";
 
@@ -74,16 +75,9 @@ export default function AdminAchievementsPage() {
   };
 
   const moveOrder = async (index: number, direction: "up" | "down") => {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= achievements.length) return;
-
-    const itemA = achievements[index];
-    const itemB = achievements[targetIndex];
-
     try {
-      await updateDoc(doc(db, "achievements", itemA.id), { order: itemB.order });
-      await updateDoc(doc(db, "achievements", itemB.id), { order: itemA.order });
-      toast.success("Order updated!");
+      const swapped = await swapCollectionOrder("achievements", achievements, index, direction);
+      if (swapped) toast.success("Order updated!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
@@ -154,6 +148,7 @@ export default function AdminAchievementsPage() {
                     key={em}
                     type="button"
                     onClick={() => setEmoji(em)}
+                    aria-label={`Select emoji ${em}`}
                     className={`p-1.5 rounded-lg border text-sm transition-colors cursor-pointer ${
                       emoji === em ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
                     }`}
@@ -178,6 +173,7 @@ export default function AdminAchievementsPage() {
               <button
                 type="button"
                 onClick={resetForm}
+                aria-label="Cancel editing"
                 className="p-2.5 rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -213,6 +209,7 @@ export default function AdminAchievementsPage() {
                         type="button"
                         onClick={() => moveOrder(idx, "up")}
                         disabled={idx === 0}
+                        aria-label={`Move ${ach.title} up`}
                         className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
                       >
                         <ArrowUp className="w-3.5 h-3.5" />
@@ -221,6 +218,7 @@ export default function AdminAchievementsPage() {
                         type="button"
                         onClick={() => moveOrder(idx, "down")}
                         disabled={idx === achievements.length - 1}
+                        aria-label={`Move ${ach.title} down`}
                         className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
                       >
                         <ArrowDown className="w-3.5 h-3.5" />
@@ -228,6 +226,7 @@ export default function AdminAchievementsPage() {
                       <button
                         type="button"
                         onClick={() => handleEdit(ach)}
+                        aria-label={`Edit ${ach.title}`}
                         className="p-1.5 rounded-lg border border-border bg-background text-primary hover:bg-primary/10 cursor-pointer"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -235,6 +234,7 @@ export default function AdminAchievementsPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(ach.id)}
+                        aria-label={`Delete ${ach.title}`}
                         className="p-1.5 rounded-lg border border-border bg-background text-red-500 hover:bg-red-500/10 cursor-pointer"
                       >
                         <Trash className="w-3.5 h-3.5" />

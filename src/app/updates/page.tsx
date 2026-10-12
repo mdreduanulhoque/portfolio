@@ -39,15 +39,15 @@ export default function UpdatesPage() {
     return loading ? [] : fallbackBlogPosts;
   }, [postsFromDb, loading]);
 
-  // Filter posts based on authentication (private posts visible only if user is logged in)
+  // Filter posts based on authentication (private posts visible only if admin is logged in)
   const visiblePosts = useMemo(() => {
     return allPosts.filter((post) => {
-      // If user is logged in, show everything
-      if (user) return true;
+      // If admin is logged in, show everything
+      if (user && isAdmin) return true;
       // Otherwise only show public posts
       return post.isPublic !== false;
     });
-  }, [allPosts, user]);
+  }, [allPosts, user, isAdmin]);
 
   // Extract all unique tags
   const tags = useMemo(() => {
@@ -79,7 +79,7 @@ export default function UpdatesPage() {
       {/* Editorial Header */}
       <div className="space-y-4 mb-12 border-b border-border/40 pb-8">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary font-mono">
-          <BookOpen className="w-3.5 h-3.5" />
+          <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
           ~/journal/updates
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold font-lora text-foreground tracking-tight">
@@ -90,9 +90,10 @@ export default function UpdatesPage() {
       {/* Search & Tag Filter Bar */}
       <div className="space-y-4 mb-10">
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <input
-            type="text"
+            type="search"
+            aria-label="Search stories, tags, and keywords"
             placeholder="Search stories, tags, keywords..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

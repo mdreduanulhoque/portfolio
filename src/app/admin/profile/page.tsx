@@ -86,9 +86,9 @@ export default function AdminProfilePage() {
       toast.success("Profile image uploaded and saved to database!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(err);
+      console.error("Profile image upload failed:", err);
       toast.error(
-        "Firebase Storage is not enabled on this project. Please paste a direct image URL below instead!"
+        `Image upload failed (${msg}). You can also paste a direct image URL below.`
       );
     } finally {
       setImgUploading(false);
@@ -129,9 +129,9 @@ export default function AdminProfilePage() {
       toast.success("Resume uploaded and saved to database!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(err);
+      console.error("Resume upload failed:", err);
       toast.error(
-        "Firebase Storage is not enabled on this project. Please paste a direct CV/Resume URL below instead!"
+        `Resume upload failed (${msg}). You can also paste a direct CV/Resume URL below.`
       );
     } finally {
       setDocUploading(false);
@@ -451,7 +451,7 @@ export default function AdminProfilePage() {
           {/* Badges */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" /> Badges
+              <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" /> Badges
             </h3>
             <div className="flex flex-wrap gap-2 mb-3">
               {formData.badges.map((badge, i) => (
@@ -463,6 +463,7 @@ export default function AdminProfilePage() {
                   <button
                     type="button"
                     onClick={() => removeBadge(i)}
+                    aria-label={`Remove badge ${badge}`}
                     className="text-muted-foreground hover:text-red-500 cursor-pointer"
                   >
                     ✕
@@ -473,6 +474,7 @@ export default function AdminProfilePage() {
             <div className="flex gap-2">
               <input
                 type="text"
+                aria-label="New badge"
                 placeholder="e.g. Computer Science Student"
                 value={newBadge}
                 onChange={(e) => setNewBadge(e.target.value)}
@@ -481,6 +483,7 @@ export default function AdminProfilePage() {
               <button
                 type="button"
                 onClick={addBadge}
+                aria-label="Add badge"
                 className="p-2 rounded-lg bg-primary text-white cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
@@ -491,7 +494,7 @@ export default function AdminProfilePage() {
           {/* Hobbies */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" /> Hobbies
+              <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" /> Hobbies
             </h3>
             <div className="flex flex-wrap gap-2 mb-3">
               {formData.hobbies.map((hobby, i) => (
@@ -503,6 +506,7 @@ export default function AdminProfilePage() {
                   <button
                     type="button"
                     onClick={() => removeHobby(i)}
+                    aria-label={`Remove hobby ${hobby}`}
                     className="text-muted-foreground hover:text-red-500 cursor-pointer"
                   >
                     ✕
@@ -513,6 +517,7 @@ export default function AdminProfilePage() {
             <div className="flex gap-2">
               <input
                 type="text"
+                aria-label="New hobby"
                 placeholder="e.g. Reading"
                 value={newHobby}
                 onChange={(e) => setNewHobby(e.target.value)}
@@ -521,6 +526,7 @@ export default function AdminProfilePage() {
               <button
                 type="button"
                 onClick={addHobby}
+                aria-label="Add hobby"
                 className="p-2 rounded-lg bg-primary text-white cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
@@ -538,6 +544,7 @@ export default function AdminProfilePage() {
             <input
               type="text"
               name="philosophyTitle"
+              aria-label="Philosophy section title"
               value={formData.philosophyTitle}
               onChange={handleTextChange}
               placeholder="Title (e.g. The Philosophy)"
@@ -555,6 +562,7 @@ export default function AdminProfilePage() {
                 <button
                   type="button"
                   onClick={() => removePara(i)}
+                  aria-label={`Delete paragraph ${i + 1}`}
                   className="text-muted-foreground hover:text-red-500 cursor-pointer shrink-0 mt-0.5"
                 >
                   <Trash className="w-4 h-4" />

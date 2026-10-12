@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { isSafeUrl } from "@/lib/data";
 
 interface PostContentProps {
   content: string;
@@ -43,17 +44,26 @@ function renderInlineFormatting(text: string): React.ReactNode {
           formatBoldAndItalic(part.substring(lastIndex, match.index), `${i}-${lastIndex}`)
         );
       }
-      partsWithLinks.push(
-        <a
-          key={`${i}-link-${match.index}`}
-          href={match[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary underline hover:text-primary/80 transition-colors"
-        >
-          {match[1]}
-        </a>
-      );
+      const rawHref = match[2].trim();
+      if (isSafeUrl(rawHref)) {
+        partsWithLinks.push(
+          <a
+            key={`${i}-link-${match.index}`}
+            href={rawHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline hover:text-primary/80 transition-colors"
+          >
+            {match[1]}
+          </a>
+        );
+      } else {
+        partsWithLinks.push(
+          <span key={`${i}-link-${match.index}`} className="text-muted-foreground">
+            {match[1]}
+          </span>
+        );
+      }
       lastIndex = linkRegex.lastIndex;
     }
 
@@ -264,7 +274,7 @@ export function PostContent({ content }: PostContentProps) {
           </div>
         );
         continue;
-      } else if (videoUrl.match(/\.(mp4|webm|ogg)$/i)) {
+      } else if (isSafeUrl(videoUrl) && videoUrl.match(/\.(mp4|webm|ogg)$/i)) {
         elements.push(
           <div key={`video-${i}`} className="my-6">
             <video
@@ -282,26 +292,28 @@ export function PostContent({ content }: PostContentProps) {
     const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
     if (imageMatch) {
       const caption = imageMatch[1];
-      const imageUrl = imageMatch[2];
-      elements.push(
-        <figure key={`img-${i}`} className="my-6">
-          <div className="rounded-2xl overflow-hidden border border-border/50 bg-muted/30">
-            {/* Using standard img for arbitrary user-provided URLs */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageUrl}
-              alt={caption || "Post image"}
-              className="w-full max-h-[550px] object-cover mx-auto"
-              loading="lazy"
-            />
-          </div>
-          {caption && (
-            <figcaption className="text-center text-xs text-muted-foreground mt-2 font-mono italic">
-              {caption}
-            </figcaption>
-          )}
-        </figure>
-      );
+      const imageUrl = imageMatch[2].trim();
+      if (isSafeUrl(imageUrl)) {
+        elements.push(
+          <figure key={`img-${i}`} className="my-6">
+            <div className="rounded-2xl overflow-hidden border border-border/50 bg-muted/30">
+              {/* Using standard img for arbitrary user-provided URLs */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageUrl}
+                alt={caption || "Post image"}
+                className="w-full max-h-[550px] object-cover mx-auto"
+                loading="lazy"
+              />
+            </div>
+            {caption && (
+              <figcaption className="text-center text-xs text-muted-foreground mt-2 font-mono italic">
+                {caption}
+              </figcaption>
+            )}
+          </figure>
+        );
+      }
       continue;
     }
 

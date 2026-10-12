@@ -79,7 +79,8 @@ export function useFirestoreCollection<T>(
     );
 
     return () => unsubscribe();
-  }, [collectionName, orderByField, orderDirection, realtime, JSON.stringify(customConstraints.map(c => c.type))]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collectionName, orderByField, orderDirection, realtime, customConstraints.length]);
 
   return { data, loading, error, setData };
 }

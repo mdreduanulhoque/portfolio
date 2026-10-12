@@ -42,8 +42,8 @@ export function HeroSection() {
             <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
             {/* Electric PCB Current Flow Graphic */}
-            <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none opacity-50 dark:opacity-30">
-                <svg className="w-full h-full" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none opacity-50 dark:opacity-30" aria-hidden="true">
+                <svg className="w-full h-full" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <style>
                         {`
                         .trace {
@@ -128,6 +128,8 @@ export function HeroSection() {
                                     src={p.profileImageUrl}
                                     alt={p.name}
                                     fill
+                                    priority
+                                    sizes="(max-width: 640px) 128px, 160px"
                                     className="object-cover"
                                 />
                             </div>

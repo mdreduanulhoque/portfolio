@@ -609,6 +609,7 @@ function UpdatesManagerContent() {
                 ref={textareaRef}
                 rows={16}
                 required
+                aria-label="Post content markdown editor"
                 placeholder="Tell your story... Use markdown, insert image URLs, or video links from the toolbar above."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -628,6 +629,7 @@ function UpdatesManagerContent() {
                   ref={textareaRef}
                   rows={16}
                   required
+                  aria-label="Post content markdown editor"
                   placeholder="Tell your story..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -679,6 +681,7 @@ function UpdatesManagerContent() {
             <button
               type="button"
               onClick={resetForm}
+              aria-label="Cancel editing"
               className="p-3 rounded-xl border border-border bg-background text-muted-foreground hover:bg-accent cursor-pointer"
               title="Cancel editing"
             >
@@ -751,6 +754,7 @@ function UpdatesManagerContent() {
                   <button
                     type="button"
                     onClick={() => handleToggleVisibility(post)}
+                    aria-label={post.isPublic ? `Make ${post.title} private` : `Make ${post.title} public`}
                     className="p-2 rounded-lg border border-border bg-background hover:bg-accent text-xs font-mono cursor-pointer"
                     title={post.isPublic ? "Make Private" : "Make Public"}
                   >
@@ -766,6 +770,7 @@ function UpdatesManagerContent() {
                     href={`/updates/read?id=${post.id}`}
                     target="_blank"
                     rel="noreferrer"
+                    aria-label={`View ${post.title}`}
                     className="p-2 rounded-lg border border-border bg-background hover:bg-accent text-muted-foreground hover:text-foreground cursor-pointer"
                     title="View post"
                   >
@@ -776,6 +781,7 @@ function UpdatesManagerContent() {
                   <button
                     type="button"
                     onClick={() => handleEdit(post)}
+                    aria-label={`Edit ${post.title}`}
                     className="p-2 rounded-lg border border-border bg-background text-primary hover:bg-primary/10 cursor-pointer"
                     title="Edit post"
                   >
@@ -786,6 +792,7 @@ function UpdatesManagerContent() {
                   <button
                     type="button"
                     onClick={() => handleDelete(post.id)}
+                    aria-label={`Delete ${post.title}`}
                     className="p-2 rounded-lg border border-border bg-background text-red-500 hover:bg-red-500/10 cursor-pointer"
                     title="Delete post"
                   >
@@ -800,10 +807,15 @@ function UpdatesManagerContent() {
 
       {/* Modal: Insert Image by URL */}
       {imageModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="insert-image-modal-title"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+        >
           <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
-            <h3 className="font-lora font-bold text-foreground text-lg flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-primary" /> Insert Image by URL
+            <h3 id="insert-image-modal-title" className="font-lora font-bold text-foreground text-lg flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-primary" aria-hidden="true" /> Insert Image by URL
             </h3>
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Image URL *</label>
@@ -848,10 +860,15 @@ function UpdatesManagerContent() {
 
       {/* Modal: Insert Video by URL */}
       {videoModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="insert-video-modal-title"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+        >
           <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
-            <h3 className="font-lora font-bold text-foreground text-lg flex items-center gap-2">
-              <Video className="w-5 h-5 text-rose-500" /> Insert Video Embed
+            <h3 id="insert-video-modal-title" className="font-lora font-bold text-foreground text-lg flex items-center gap-2">
+              <Video className="w-5 h-5 text-rose-500" aria-hidden="true" /> Insert Video Embed
             </h3>
             <p className="text-xs text-muted-foreground font-sans">
               Provide a YouTube video link (e.g. <code className="text-primary font-mono">https://youtu.be/XYZ</code> or <code className="text-primary font-mono">https://www.youtube.com/watch?v=XYZ</code>) or direct video URL.

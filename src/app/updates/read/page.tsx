@@ -42,7 +42,7 @@ function PostReaderContent() {
   const postId = searchParams.get("id");
   const postSlug = searchParams.get("slug");
 
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -98,12 +98,16 @@ function PostReaderContent() {
     };
   }, [postId, postSlug]);
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      toast.success("Article link copied to clipboard!");
-      setTimeout(() => setCopied(false), 2000);
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        toast.success("Article link copied to clipboard!");
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        toast.error("Unable to copy link to clipboard.");
+      }
     }
   };
 
@@ -132,8 +136,8 @@ function PostReaderContent() {
     );
   }
 
-  // Privacy Protection: Post is private and viewer is not logged in
-  if (post.isPublic === false && !user) {
+  // Privacy Protection: Post is private and viewer is not an authorized admin
+  if (post.isPublic === false && !(user && isAdmin)) {
     return (
       <div className="min-h-screen py-24 px-4 max-w-xl mx-auto text-center space-y-6">
         <div className="inline-flex p-3 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
@@ -187,7 +191,7 @@ function PostReaderContent() {
 
         <div className="flex items-center gap-2">
           {/* Admin shortcut edit */}
-          {user && (
+          {user && isAdmin && (
             <Link
               href={`/admin/updates?edit=${post.id}`}
               className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-primary/30 bg-primary/10 text-primary text-xs font-mono hover:bg-primary/20 transition-colors"

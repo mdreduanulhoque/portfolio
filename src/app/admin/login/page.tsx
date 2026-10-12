@@ -40,8 +40,14 @@ export default function AdminLoginPage() {
       toast.success("Welcome back, commander.");
       router.push("/admin");
     } catch (err: unknown) {
-      console.error(err);
-      const msg = err instanceof Error ? err.message : "Failed to sign in. Please verify credentials.";
+      console.error("Admin sign-in failed:", err);
+      const code = (err as { code?: string })?.code || "";
+      let msg = "Failed to sign in. Please verify your email and password.";
+      if (code === "auth/too-many-requests") {
+        msg = "Too many failed attempts. Please wait a few minutes and try again.";
+      } else if (code === "auth/network-request-failed") {
+        msg = "Network error. Please check your internet connection and try again.";
+      }
       setError(msg);
       toast.error("Access denied.");
     } finally {
@@ -72,7 +78,7 @@ export default function AdminLoginPage() {
               <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
             </div>
             <div className="flex-1 text-center text-xs text-slate-400 font-mono flex items-center justify-center">
-              <Terminal className="w-4 h-4 mr-2 text-primary" />
+              <Terminal className="w-4 h-4 mr-2 text-primary" aria-hidden="true" />
               ssh admin@reduan.hoque
             </div>
           </div>
@@ -85,18 +91,19 @@ export default function AdminLoginPage() {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg flex items-start gap-2.5">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <div role="alert" className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                 <span className="text-xs leading-relaxed">{error}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-slate-400 text-xs block font-medium">EMAIL</label>
+                <label htmlFor="admin-email" className="text-slate-400 text-xs block font-medium">EMAIL</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" aria-hidden="true" />
                   <input
+                    id="admin-email"
                     type="email"
                     required
                     value={email}
@@ -108,10 +115,11 @@ export default function AdminLoginPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 text-xs block font-medium">PASSWORD</label>
+                <label htmlFor="admin-password" className="text-slate-400 text-xs block font-medium">PASSWORD</label>
                 <div className="relative">
-                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" aria-hidden="true" />
                   <input
+                    id="admin-password"
                     type="password"
                     required
                     value={password}

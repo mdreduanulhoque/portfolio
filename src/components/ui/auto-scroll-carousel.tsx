@@ -37,12 +37,13 @@ export function AutoScrollCarousel<T>({
 
   const trackItems = useMemo(() => {
     if (items.length === 0) return [];
-    const list: { item: T; key: string }[] = [];
+    const list: { item: T; key: string; isClone: boolean }[] = [];
     for (let r = 0; r < repeatCount; r++) {
       items.forEach((item, index) => {
         list.push({
           item,
           key: `${idKey(item, index)}-r${r}`,
+          isClone: r > 0,
         });
       });
     }
@@ -149,14 +150,19 @@ export function AutoScrollCarousel<T>({
       >
         {/* Track 1 */}
         <div
-          className="flex shrink-0 items-stretch gap-6 sm:gap-8 pr-6 sm:pr-8 animate-marquee-ltr group-hover/marquee:[animation-play-state:paused]"
+          className="flex shrink-0 items-stretch gap-6 sm:gap-8 pr-6 sm:pr-8 animate-marquee-ltr group-hover/marquee:[animation-play-state:paused] group-focus-within/marquee:[animation-play-state:paused]"
           style={{
             animationDuration: `${durationSeconds}s`,
             animationPlayState: isPaused ? "paused" : undefined,
           }}
         >
-          {trackItems.map(({ item, key }, index) => (
-            <div key={`t1-${key}`} className="h-full flex flex-col shrink-0">
+          {trackItems.map(({ item, key, isClone }, index) => (
+            <div
+              key={`t1-${key}`}
+              className="h-full flex flex-col shrink-0"
+              aria-hidden={isClone ? "true" : undefined}
+              inert={isClone ? true : undefined}
+            >
               {renderItem(item, index)}
             </div>
           ))}
@@ -164,12 +170,13 @@ export function AutoScrollCarousel<T>({
 
         {/* Track 2 (exact duplicate for seamless loop) */}
         <div
-          className="flex shrink-0 items-stretch gap-6 sm:gap-8 pr-6 sm:pr-8 animate-marquee-ltr group-hover/marquee:[animation-play-state:paused]"
+          className="flex shrink-0 items-stretch gap-6 sm:gap-8 pr-6 sm:pr-8 animate-marquee-ltr group-hover/marquee:[animation-play-state:paused] group-focus-within/marquee:[animation-play-state:paused]"
           style={{
             animationDuration: `${durationSeconds}s`,
             animationPlayState: isPaused ? "paused" : undefined,
           }}
           aria-hidden="true"
+          inert={true}
         >
           {trackItems.map(({ item, key }, index) => (
             <div key={`t2-${key}`} className="h-full flex flex-col shrink-0">

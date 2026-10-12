@@ -368,7 +368,10 @@ export function SkillsSection() {
               key={skill.id}
               className="px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xs hover:border-primary/40 hover:bg-card hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-3.5 group cursor-default"
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-background/90 border border-border/40 group-hover:scale-105 group-hover:border-primary/30 transition-transform duration-200 flex items-center justify-center shadow-2xs shrink-0">
+              <div
+                aria-hidden="true"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-background/90 border border-border/40 group-hover:scale-105 group-hover:border-primary/30 transition-transform duration-200 flex items-center justify-center shadow-2xs shrink-0"
+              >
                 <TechLogo name={skill.displayName} />
               </div>
 

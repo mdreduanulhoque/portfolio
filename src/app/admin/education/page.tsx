@@ -5,6 +5,7 @@ import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { db } from "@/lib/firebase";
 import { doc, addDoc, updateDoc, deleteDoc, collection } from "firebase/firestore";
 import type { Education } from "@/lib/data";
+import { swapCollectionOrder } from "@/lib/data";
 import toast from "react-hot-toast";
 import { Trash, Edit2, Save, X, ArrowUp, ArrowDown } from "lucide-react";
 
@@ -82,16 +83,9 @@ export default function AdminEducationPage() {
   };
 
   const moveOrder = async (index: number, direction: "up" | "down") => {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= education.length) return;
-
-    const itemA = education[index];
-    const itemB = education[targetIndex];
-
     try {
-      await updateDoc(doc(db, "education", itemA.id), { order: itemB.order });
-      await updateDoc(doc(db, "education", itemB.id), { order: itemA.order });
-      toast.success("Order updated!");
+      const swapped = await swapCollectionOrder("education", education, index, direction);
+      if (swapped) toast.success("Order updated!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
@@ -189,6 +183,7 @@ export default function AdminEducationPage() {
               <button
                 type="button"
                 onClick={resetForm}
+                aria-label="Cancel editing"
                 className="p-2.5 rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -230,6 +225,7 @@ export default function AdminEducationPage() {
                         type="button"
                         onClick={() => moveOrder(idx, "up")}
                         disabled={idx === 0}
+                        aria-label={`Move ${edu.institution} up`}
                         className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
                       >
                         <ArrowUp className="w-3.5 h-3.5" />
@@ -238,6 +234,7 @@ export default function AdminEducationPage() {
                         type="button"
                         onClick={() => moveOrder(idx, "down")}
                         disabled={idx === education.length - 1}
+                        aria-label={`Move ${edu.institution} down`}
                         className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
                       >
                         <ArrowDown className="w-3.5 h-3.5" />
@@ -245,6 +242,7 @@ export default function AdminEducationPage() {
                       <button
                         type="button"
                         onClick={() => handleEdit(edu)}
+                        aria-label={`Edit ${edu.institution}`}
                         className="p-1.5 rounded-lg border border-border bg-background text-primary hover:bg-primary/10 cursor-pointer"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -252,6 +250,7 @@ export default function AdminEducationPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(edu.id)}
+                        aria-label={`Delete ${edu.institution}`}
                         className="p-1.5 rounded-lg border border-border bg-background text-red-500 hover:bg-red-500/10 cursor-pointer"
                       >
                         <Trash className="w-3.5 h-3.5" />

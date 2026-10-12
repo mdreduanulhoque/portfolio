@@ -5,8 +5,47 @@ import {
   getDoc,
   query,
   orderBy,
+  where,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
+
+export function isSafeUrl(url: string): boolean {
+  if (!url) return false;
+  const trimmed = url.trim();
+  if (trimmed.startsWith("/") || trimmed.startsWith("#")) return true;
+  try {
+    const parsed = new URL(trimmed);
+    return (
+      parsed.protocol === "https:" ||
+      parsed.protocol === "http:" ||
+      parsed.protocol === "mailto:"
+    );
+  } catch {
+    return false;
+  }
+}
+
+export async function swapCollectionOrder<T extends { id: string; order: number }>(
+  collectionName: string,
+  items: T[],
+  index: number,
+  direction: "up" | "down"
+): Promise<boolean> {
+  const targetIndex = direction === "up" ? index - 1 : index + 1;
+  if (targetIndex < 0 || targetIndex >= items.length) return false;
+
+  const itemA = items[index];
+  const itemB = items[targetIndex];
+  const newOrderA = itemA.order === itemB.order ? targetIndex : itemB.order;
+  const newOrderB = itemA.order === itemB.order ? index : itemA.order;
+
+  const batch = writeBatch(db);
+  batch.update(doc(db, collectionName, itemA.id), { order: newOrderA });
+  batch.update(doc(db, collectionName, itemB.id), { order: newOrderB });
+  await batch.commit();
+  return true;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -192,7 +231,11 @@ export const fallbackBlogPosts: BlogPost[] = [
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
   try {
-    const q = query(collection(db, "updates"), orderBy("createdAt", "desc"));
+    const q = query(
+      collection(db, "updates"),
+      where("isPublic", "==", true),
+      orderBy("createdAt", "desc")
+    );
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
       return fallbackBlogPosts;

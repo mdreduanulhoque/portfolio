@@ -35,7 +35,39 @@ export const metadata: Metadata = {
     url: "https://reduanulhoque.web.app",
     siteName: "MD REDUANUL HOQUE - Portfolio",
     type: "website",
+    images: [
+      {
+        url: "/Formal.jpg",
+        width: 800,
+        height: 1000,
+        alt: "MD Reduanul Hoque",
+      },
+    ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "MD REDUANUL HOQUE - Portfolio",
+    description: "Computer Science and Engineering student portfolio. Exploring modern web technologies, algorithms, and deep thinking.",
+    images: ["/Formal.jpg"],
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "MD Reduanul Hoque",
+  url: "https://reduanulhoque.web.app",
+  image: "https://reduanulhoque.web.app/Formal.jpg",
+  jobTitle: "Computer Science & Engineering Student and Educator",
+  alumniOf: {
+    "@type": "CollegeOrUniversity",
+    name: "United International University",
+  },
+  sameAs: [
+    "https://github.com/mdreduanulhoque",
+    "https://www.linkedin.com/in/md-reduanul-hoque-/",
+    "https://www.facebook.com/reduan.sadik.9",
+  ],
 };
 
 export default function RootLayout({
@@ -46,6 +78,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${lora.variable} font-sans antialiased min-h-screen flex flex-col`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <AuthProvider>
           <ThemeProvider
             attribute="class"

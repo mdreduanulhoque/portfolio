@@ -59,6 +59,7 @@ export function ClassesSection() {
                                     src={`https://img.youtube.com/vi/${item.videoId}/maxresdefault.jpg`}
                                     alt={item.title}
                                     fill
+                                    sizes="(max-width: 640px) 300px, (max-width: 768px) 350px, 380px"
                                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                                 />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
