@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://reduanulhoque.web.app"),
   title: "MD REDUANUL HOQUE - Portfolio",
   description: "Computer Science and Engineering student portfolio. Exploring modern web technologies, algorithms, and deep thinking.",
+  icons: {
+    icon: "/icon.png?v=2",
+    shortcut: "/icon.png?v=2",
+    apple: "/icon.png?v=2",
+  },
   alternates: {
     canonical: "/",
   },

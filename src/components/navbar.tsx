@@ -5,11 +5,76 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
-import type { Profile } from "@/lib/data";
+import { fallbackProfile, type Profile } from "@/lib/data";
+
+function applyFaviconHref(href: string) {
+    const links = document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']");
+    if (links.length > 0) {
+        links.forEach((link) => {
+            link.href = href;
+        });
+    } else {
+        const link = document.createElement("link");
+        link.rel = "icon";
+        link.href = href;
+        document.head.appendChild(link);
+    }
+}
 
 export function Navbar() {
     const pathname = usePathname();
     const { data: profile } = useFirestoreDoc<Profile>("profile", "main");
+    const profileImageUrl = profile?.profileImageUrl || fallbackProfile.profileImageUrl;
+
+    React.useEffect(() => {
+        if (!profileImageUrl) return;
+
+        let cancelled = false;
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+
+        img.onload = () => {
+            if (cancelled) return;
+            try {
+                const size = 64;
+                const canvas = document.createElement("canvas");
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) {
+                    applyFaviconHref(profileImageUrl);
+                    return;
+                }
+
+                // Crop a square focused on the upper/face region for portrait photos
+                const sSize = Math.min(img.width, img.height);
+                const sx = (img.width - sSize) / 2;
+                const sy = img.height > img.width ? (img.height - sSize) * 0.12 : 0;
+
+                ctx.beginPath();
+                ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+
+                ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, size, size);
+                applyFaviconHref(canvas.toDataURL("image/png"));
+            } catch {
+                applyFaviconHref(profileImageUrl);
+            }
+        };
+
+        img.onerror = () => {
+            if (!cancelled) {
+                applyFaviconHref(profileImageUrl);
+            }
+        };
+
+        img.src = profileImageUrl;
+
+        return () => {
+            cancelled = true;
+        };
+    }, [profileImageUrl]);
 
     // Do not render public navbar on admin pages
     if (pathname?.startsWith("/admin")) {
