@@ -26,6 +26,31 @@ export function isSafeUrl(url: string): boolean {
   }
 }
 
+/**
+ * Normalizes user-supplied image URLs, converting known preview links
+ * (such as Google Drive preview/sharing links) into direct image stream endpoints.
+ */
+export function normalizeImageUrl(url: string | undefined | null): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+
+  // Google Drive: https://drive.google.com/file/d/{FILE_ID}/...
+  const driveFilePattern = /^https?:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i;
+  const matchFile = trimmed.match(driveFilePattern);
+  if (matchFile && matchFile[1]) {
+    return `https://lh3.googleusercontent.com/d/${matchFile[1]}`;
+  }
+
+  // Google Drive: https://drive.google.com/open?id={FILE_ID} or /uc?id={FILE_ID} or /uc?export=view&id={FILE_ID}
+  const driveQueryPattern = /^https?:\/\/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/i;
+  const matchQuery = trimmed.match(driveQueryPattern);
+  if (matchQuery && matchQuery[1]) {
+    return `https://lh3.googleusercontent.com/d/${matchQuery[1]}`;
+  }
+
+  return trimmed;
+}
+
 export async function swapCollectionOrder<T extends { id: string; order: number }>(
   collectionName: string,
   items: T[],

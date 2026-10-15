@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { BlogPost, fallbackBlogPosts } from "@/lib/data";
+import { BlogPost, fallbackBlogPosts, normalizeImageUrl } from "@/lib/data";
 import { PostContent } from "@/components/blog/post-content";
 import toast from "react-hot-toast";
 import {
@@ -252,7 +252,7 @@ function PostReaderContent() {
           <div className="rounded-2xl overflow-hidden border border-border/50 bg-muted/30 shadow-sm mt-8">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={post.coverImage}
+              src={normalizeImageUrl(post.coverImage)}
               alt={post.title}
               className="w-full max-h-[500px] object-cover"
             />

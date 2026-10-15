@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { isSafeUrl } from "@/lib/data";
+import { isSafeUrl, normalizeImageUrl } from "@/lib/data";
 
 interface PostContentProps {
   content: string;
@@ -292,7 +292,7 @@ export function PostContent({ content }: PostContentProps) {
     const imageMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
     if (imageMatch) {
       const caption = imageMatch[1];
-      const imageUrl = imageMatch[2].trim();
+      const imageUrl = normalizeImageUrl(imageMatch[2].trim());
       if (isSafeUrl(imageUrl)) {
         elements.push(
           <figure key={`img-${i}`} className="my-6">

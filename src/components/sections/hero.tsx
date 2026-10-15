@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import type { Profile } from "@/lib/data";
-import { fallbackProfile } from "@/lib/data";
+import { fallbackProfile, normalizeImageUrl } from "@/lib/data";
 
 
 
@@ -125,7 +125,7 @@ export function HeroSection() {
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                             <div className="relative w-32 h-40 sm:w-40 sm:h-48 rounded-2xl overflow-hidden border-4 border-background shadow-xl ring-2 ring-primary/20 shrink-0 sm:mt-2">
                                 <Image
-                                    src={p.profileImageUrl}
+                                    src={normalizeImageUrl(p.profileImageUrl) || "/Formal.jpg"}
                                     alt={p.name}
                                     fill
                                     priority

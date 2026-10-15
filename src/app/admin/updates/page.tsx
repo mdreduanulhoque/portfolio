@@ -11,7 +11,7 @@ import {
   updateDoc,
   deleteDoc,
 } from "firebase/firestore";
-import type { BlogPost } from "@/lib/data";
+import { BlogPost, normalizeImageUrl } from "@/lib/data";
 import { PostContent } from "@/components/blog/post-content";
 import toast from "react-hot-toast";
 import {
@@ -212,7 +212,8 @@ function UpdatesManagerContent() {
       return;
     }
     const caption = imageCaptionInput.trim();
-    insertTextAtCursor(`\n![${caption}](${imageUrlInput.trim()})\n`);
+    const normalizedUrl = normalizeImageUrl(imageUrlInput.trim());
+    insertTextAtCursor(`\n![${caption}](${normalizedUrl})\n`);
     setImageUrlInput("");
     setImageCaptionInput("");
     setImageModalOpen(false);
@@ -245,7 +246,7 @@ function UpdatesManagerContent() {
       slug: slug.trim() || generateSlug(title),
       excerpt: excerpt.trim(),
       content,
-      coverImage: coverImage.trim(),
+      coverImage: normalizeImageUrl(coverImage.trim()),
       tags,
       isPublic,
       readTimeMinutes: readTime,
@@ -385,14 +386,14 @@ function UpdatesManagerContent() {
         {/* Cover Image URL */}
         <div className="space-y-1">
           <label className="text-xs font-bold text-muted-foreground uppercase flex items-center justify-between">
-            <span>Cover Image URL (Direct Link)</span>
+            <span>Cover Image URL (Direct Link or Google Drive)</span>
             {coverImage && (
               <span className="text-[10px] text-emerald-500 font-mono">Image attached</span>
             )}
           </label>
           <input
             type="url"
-            placeholder="https://images.unsplash.com/... or direct image link"
+            placeholder="https://images.unsplash.com/... or Google Drive share link"
             value={coverImage}
             onChange={(e) => setCoverImage(e.target.value)}
             className="w-full px-3.5 py-2 rounded-xl border border-border bg-background focus:outline-none focus:border-primary text-xs font-mono"
@@ -401,7 +402,7 @@ function UpdatesManagerContent() {
             <div className="pt-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={coverImage}
+                src={normalizeImageUrl(coverImage)}
                 alt="Cover Preview"
                 className="h-28 rounded-xl object-cover border border-border/50"
               />

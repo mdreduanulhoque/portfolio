@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { useAuth } from "@/lib/auth-context";
 import { where } from "firebase/firestore";
-import { BlogPost, fallbackBlogPosts } from "@/lib/data";
+import { BlogPost, fallbackBlogPosts, normalizeImageUrl } from "@/lib/data";
 import {
   Search,
   Calendar,
@@ -241,7 +241,7 @@ export default function UpdatesPage() {
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={post.coverImage}
+                        src={normalizeImageUrl(post.coverImage)}
                         alt={post.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
