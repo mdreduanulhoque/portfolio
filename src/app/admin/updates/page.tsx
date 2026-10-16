@@ -12,7 +12,10 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { BlogPost, normalizeImageUrl } from "@/lib/data";
-import { PostContent } from "@/components/blog/post-content";
+import {
+  PostContent,
+  HIGHLIGHT_THEME_STYLES,
+} from "@/components/blog/post-content";
 import toast from "react-hot-toast";
 import {
   Save,
@@ -37,6 +40,10 @@ import {
   PenLine,
   Sparkles,
   Columns,
+  Highlighter,
+  ALargeSmall,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 
 function UpdatesManagerContent() {
@@ -69,6 +76,25 @@ function UpdatesManagerContent() {
   const [videoUrlInput, setVideoUrlInput] = useState("");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const toolbarMenuRef = useRef<HTMLDivElement>(null);
+
+  // Font Size and Highlighter UI States
+  const [fontSizeMenuOpen, setFontSizeMenuOpen] = useState(false);
+  const [highlighterMenuOpen, setHighlighterMenuOpen] = useState(false);
+  const [selectedHighlightColor, setSelectedHighlightColor] = useState<string>("theme");
+  const [editorFontSize, setEditorFontSize] = useState<"xs" | "sm" | "base">("sm");
+
+  // Close toolbar popups when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (toolbarMenuRef.current && !toolbarMenuRef.current.contains(e.target as Node)) {
+        setFontSizeMenuOpen(false);
+        setHighlighterMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const sortedPosts = useMemo(() => {
     return [...posts].sort(
@@ -453,7 +479,10 @@ function UpdatesManagerContent() {
 
         {/* Medium-style Editor Section */}
         <div className="space-y-2 pt-2">
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/40 p-2.5 rounded-xl border border-border/50">
+          <div
+            ref={toolbarMenuRef}
+            className="flex flex-wrap items-center justify-between gap-3 bg-muted/40 p-2.5 rounded-xl border border-border/50 relative"
+          >
             {/* Formatting Toolbar */}
             <div className="flex flex-wrap items-center gap-1">
               <button
@@ -480,6 +509,174 @@ function UpdatesManagerContent() {
               >
                 <Heading3 className="w-4 h-4" />
               </button>
+
+              <span className="w-px h-4 bg-border/60 mx-1" />
+
+              {/* Font Size Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFontSizeMenuOpen((prev) => !prev);
+                    setHighlighterMenuOpen(false);
+                  }}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono transition-colors cursor-pointer ${
+                    fontSizeMenuOpen
+                      ? "bg-primary/15 text-primary font-bold shadow-xs"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                  title="Font Size (Small, Normal, Large, XL, 2XL)"
+                  aria-expanded={fontSizeMenuOpen}
+                >
+                  <ALargeSmall className="w-4 h-4 text-primary" />
+                  <span className="hidden sm:inline">Size</span>
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </button>
+
+                {fontSizeMenuOpen && (
+                  <div className="absolute left-0 top-full mt-1.5 z-40 w-60 p-1.5 rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-xl space-y-1">
+                    <div className="px-2 py-1 text-[10px] font-mono text-muted-foreground uppercase tracking-wider font-semibold border-b border-border/40 pb-1">
+                      Content Font Size
+                    </div>
+                    {[
+                      { key: "sm", label: "Small", desc: "Captions, notes, footnotes", preview: "text-xs font-mono" },
+                      { key: "base", label: "Normal", desc: "Standard body text", preview: "text-sm font-sans" },
+                      { key: "lg", label: "Large", desc: "Lead paragraph, emphasis", preview: "text-base font-medium font-sans" },
+                      { key: "xl", label: "Extra Large", desc: "Callouts, subheadings", preview: "text-lg font-bold font-sans" },
+                      { key: "2xl", label: "Huge (2XL)", desc: "Display title, big impact", preview: "text-xl font-bold font-lora" },
+                    ].map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          insertTextAtCursor(`[size=${item.key}]`, `[/size]`, `${item.label} text`);
+                          setFontSizeMenuOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between p-2 rounded-lg text-left hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer group"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                            <span>{item.label}</span>
+                            <code className="text-[10px] text-muted-foreground font-mono">
+                              [size={item.key}]
+                            </code>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground line-clamp-1">
+                            {item.desc}
+                          </div>
+                        </div>
+                        <span className={`${item.preview} text-primary px-1.5 py-0.5 rounded bg-muted/60`}>
+                          Aa
+                        </span>
+                      </button>
+                    ))}
+                    <div className="px-2 pt-1 border-t border-border/40 text-[10px] text-muted-foreground font-mono">
+                      Wraps selection or inserts tag
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Theme-Adaptive Highlighter Tool */}
+              <div className="relative inline-flex items-center rounded-lg border border-border/60 bg-background/60 shadow-xs">
+                {/* Quick Highlight Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedHighlightColor === "theme" || selectedHighlightColor === "primary") {
+                      insertTextAtCursor("==", "==", "highlighted text");
+                    } else {
+                      insertTextAtCursor(`==${selectedHighlightColor}:`, "==", "highlighted text");
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-l-md text-xs font-mono transition-colors cursor-pointer hover:bg-accent text-foreground"
+                  title={`Highlight (${HIGHLIGHT_THEME_STYLES[selectedHighlightColor]?.label || "Theme Accent"})`}
+                >
+                  <Highlighter className="w-3.5 h-3.5 text-primary" />
+                  <span className="hidden sm:inline">Highlight</span>
+                </button>
+
+                {/* Color Picker Dropdown Trigger */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHighlighterMenuOpen((prev) => !prev);
+                    setFontSizeMenuOpen(false);
+                  }}
+                  className={`p-1 rounded-r-md border-l border-border/60 text-xs transition-colors cursor-pointer ${
+                    highlighterMenuOpen
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                  title="Select Highlighter Theme Color"
+                  aria-expanded={highlighterMenuOpen}
+                >
+                  <ChevronDown className="w-3 h-3 opacity-70" />
+                </button>
+
+                {/* Highlighter Menu */}
+                {highlighterMenuOpen && (
+                  <div className="absolute left-0 top-full mt-1.5 z-40 w-64 p-2 rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-xl space-y-1.5">
+                    <div className="px-2 py-1 text-[10px] font-mono text-muted-foreground uppercase tracking-wider font-semibold flex items-center justify-between border-b border-border/40 pb-1">
+                      <span>Highlighter Colors</span>
+                      <span className="text-[9px] text-primary font-mono">Theme Adaptive</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      {[
+                        { key: "theme", name: "Theme Accent", badge: "Primary Adaptive", color: HIGHLIGHT_THEME_STYLES.theme },
+                        { key: "yellow", name: "Amber Yellow", badge: "Warm Marker", color: HIGHLIGHT_THEME_STYLES.yellow },
+                        { key: "green", name: "Emerald Green", badge: "Fresh Accent", color: HIGHLIGHT_THEME_STYLES.green },
+                        { key: "purple", name: "Violet Purple", badge: "Creative Focus", color: HIGHLIGHT_THEME_STYLES.purple },
+                        { key: "rose", name: "Rose Coral", badge: "Urgent Highlight", color: HIGHLIGHT_THEME_STYLES.rose },
+                        { key: "sky", name: "Cyan Sky", badge: "Modern Tech", color: HIGHLIGHT_THEME_STYLES.sky },
+                      ].map((item) => {
+                        const isSelected = selectedHighlightColor === item.key;
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => {
+                              setSelectedHighlightColor(item.key);
+                              if (item.key === "theme" || item.key === "primary") {
+                                insertTextAtCursor("==", "==", "highlighted text");
+                              } else {
+                                insertTextAtCursor(`==${item.key}:`, "==", "highlighted text");
+                              }
+                              setHighlighterMenuOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between p-1.5 rounded-lg text-left transition-colors cursor-pointer ${
+                              isSelected ? "bg-accent/80" : "hover:bg-accent/50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`w-3.5 h-3.5 rounded-full border shrink-0 ${item.color.previewBadge}`} />
+                              <div className="min-w-0">
+                                <div className="text-xs font-medium text-foreground truncate">
+                                  {item.name}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground font-mono">
+                                  {item.key === "theme" ? "==text==" : `==${item.key}:text==`}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <mark className={`text-[10px] ${item.color.className}`}>
+                                Sample
+                              </mark>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-primary ml-1" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="px-2 pt-1.5 border-t border-border/40 text-[10px] text-muted-foreground font-mono">
+                      Colors adapt automatically to Light & Dark themes
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <span className="w-px h-4 bg-border/60 mx-1" />
 
@@ -563,43 +760,68 @@ function UpdatesManagerContent() {
               </button>
             </div>
 
-            {/* View Mode Switcher */}
-            <div className="flex items-center gap-1 bg-background/80 p-1 rounded-lg border border-border/40 text-xs">
-              <button
-                type="button"
-                onClick={() => setViewMode("write")}
-                className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                  viewMode === "write"
-                    ? "bg-primary text-primary-foreground font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Write
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("preview")}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                  viewMode === "preview"
-                    ? "bg-primary text-primary-foreground font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Eye className="w-3 h-3" />
-                Preview
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("split")}
-                className={`hidden md:flex items-center gap-1 px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                  viewMode === "split"
-                    ? "bg-primary text-primary-foreground font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Columns className="w-3 h-3" />
-                Split
-              </button>
+            {/* View Mode & Editor Font Size Switchers */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Editor Writing Text Size */}
+              <div className="flex items-center gap-0.5 bg-background/80 p-1 rounded-lg border border-border/40 text-xs">
+                <span className="text-[10px] text-muted-foreground font-mono px-1 hidden sm:inline">
+                  Editor:
+                </span>
+                {(["xs", "sm", "base"] as const).map((sz) => (
+                  <button
+                    key={sz}
+                    type="button"
+                    onClick={() => setEditorFontSize(sz)}
+                    className={`px-1.5 py-0.5 rounded text-[11px] font-mono transition-colors cursor-pointer ${
+                      editorFontSize === sz
+                        ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title={`Editor writing size: ${sz === "xs" ? "12px" : sz === "sm" ? "14px" : "16px"}`}
+                  >
+                    {sz === "xs" ? "12px" : sz === "sm" ? "14px" : "16px"}
+                  </button>
+                ))}
+              </div>
+
+              {/* View Mode Switcher */}
+              <div className="flex items-center gap-1 bg-background/80 p-1 rounded-lg border border-border/40 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("write")}
+                  className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                    viewMode === "write"
+                      ? "bg-primary text-primary-foreground font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Write
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("preview")}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                    viewMode === "preview"
+                      ? "bg-primary text-primary-foreground font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Eye className="w-3 h-3" />
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("split")}
+                  className={`hidden md:flex items-center gap-1 px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                    viewMode === "split"
+                      ? "bg-primary text-primary-foreground font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Columns className="w-3 h-3" />
+                  Split
+                </button>
+              </div>
             </div>
           </div>
 
@@ -611,10 +833,12 @@ function UpdatesManagerContent() {
                 rows={16}
                 required
                 aria-label="Post content markdown editor"
-                placeholder="Tell your story... Use markdown, insert image URLs, or video links from the toolbar above."
+                placeholder="Tell your story... Use markdown, font size [size=lg], highlighter ==text==, insert image URLs, or video links from the toolbar above."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="w-full p-4 rounded-xl border border-border bg-background focus:outline-none focus:border-primary font-mono text-xs leading-relaxed"
+                className={`w-full p-4 rounded-xl border border-border bg-background focus:outline-none focus:border-primary font-mono leading-relaxed transition-all ${
+                  editorFontSize === "xs" ? "text-xs" : editorFontSize === "base" ? "text-base" : "text-sm"
+                }`}
               />
             )}
 
@@ -634,7 +858,9 @@ function UpdatesManagerContent() {
                   placeholder="Tell your story..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full p-4 rounded-xl border border-border bg-background focus:outline-none focus:border-primary font-mono text-xs leading-relaxed"
+                  className={`w-full p-4 rounded-xl border border-border bg-background focus:outline-none focus:border-primary font-mono leading-relaxed transition-all ${
+                    editorFontSize === "xs" ? "text-xs" : editorFontSize === "base" ? "text-base" : "text-sm"
+                  }`}
                 />
                 <div className="p-4 rounded-xl border border-border/50 bg-background/80 overflow-y-auto max-h-[380px]">
                   <PostContent content={content || "*Live preview will appear here...*"} />
@@ -644,10 +870,16 @@ function UpdatesManagerContent() {
           </div>
 
           {/* Stats bar */}
-          <div className="flex items-center justify-between text-xs font-mono text-muted-foreground pt-1 px-1">
-            <span>
-              {wordCount} words • ~{estimatedReadTime} min read
-            </span>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-muted-foreground pt-1 px-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span>
+                {wordCount} words • ~{estimatedReadTime} min read
+              </span>
+              <span className="hidden lg:inline text-border">•</span>
+              <span className="hidden lg:inline text-[11px] text-muted-foreground/80">
+                Formatting: <code className="text-primary font-bold">==theme highlight==</code> • <code className="text-primary font-bold">==yellow:note==</code> • <code className="text-primary font-bold">[size=lg]large text[/size]</code>
+              </span>
+            </div>
             <span>
               Status:{" "}
               <strong className={isPublic ? "text-emerald-500" : "text-amber-500"}>
