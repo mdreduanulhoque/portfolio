@@ -7,7 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { BlogPost, fallbackBlogPosts, normalizeImageUrl } from "@/lib/data";
-import { PostContent } from "@/components/blog/post-content";
+import { PostContent, BLOG_FONT_STYLES } from "@/components/blog/post-content";
 import toast from "react-hot-toast";
 import {
   ArrowLeft,
@@ -19,6 +19,7 @@ import {
   Edit2,
   Check,
   ShieldAlert,
+  Type,
 } from "lucide-react";
 
 function ReaderSkeleton() {
@@ -46,6 +47,7 @@ function PostReaderContent() {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [readerFont, setReaderFont] = useState<string>("claude");
 
   useEffect(() => {
     let isMounted = true;
@@ -62,7 +64,9 @@ function PostReaderContent() {
           const docRef = doc(db, "updates", postId);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists() && isMounted) {
-            setPost({ id: docSnap.id, ...docSnap.data() } as BlogPost);
+            const data = docSnap.data() as BlogPost;
+            setPost({ ...data, id: docSnap.id });
+            if (data.fontFamily) setReaderFont(data.fontFamily);
             setLoading(false);
             return;
           }
@@ -76,6 +80,7 @@ function PostReaderContent() {
 
         if (fallback && isMounted) {
           setPost(fallback);
+          if (fallback.fontFamily) setReaderFont(fallback.fontFamily);
         }
       } catch (err) {
         console.error("Error loading blog post:", err);
@@ -85,6 +90,7 @@ function PostReaderContent() {
         );
         if (fallback && isMounted) {
           setPost(fallback);
+          if (fallback.fontFamily) setReaderFont(fallback.fontFamily);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -237,12 +243,37 @@ function PostReaderContent() {
           )}
         </div>
 
-        <h1 className="text-3xl sm:text-5xl font-bold font-lora text-foreground tracking-tight leading-tight">
+        {/* Reading Typography Style Switcher (Medium, Claude, Modern, Classic, Mono) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-xs text-xs font-mono">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Type className="w-3.5 h-3.5 text-primary" />
+            <span className="font-semibold text-foreground">Reading Typography:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1">
+            {Object.values(BLOG_FONT_STYLES).map((font) => (
+              <button
+                key={font.key}
+                type="button"
+                onClick={() => setReaderFont(font.key)}
+                className={`px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer ${
+                  readerFont === font.key
+                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                } ${font.className}`}
+                title={`${font.name} (${font.sourceStyle})`}
+              >
+                {font.name.split(" ")[0]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <h1 className={`text-3xl sm:text-5xl font-bold text-foreground tracking-tight leading-tight ${BLOG_FONT_STYLES[readerFont]?.className || "font-claude"}`}>
           {post.title}
         </h1>
 
         {post.excerpt && (
-          <p className="text-lg sm:text-xl text-muted-foreground font-lora italic leading-relaxed border-l-2 border-primary/40 pl-4 py-1">
+          <p className={`text-lg sm:text-xl text-muted-foreground italic leading-relaxed border-l-2 border-primary/40 pl-4 py-1 ${BLOG_FONT_STYLES[readerFont]?.className || "font-claude"}`}>
             {post.excerpt}
           </p>
         )}
@@ -261,8 +292,8 @@ function PostReaderContent() {
       </header>
 
       {/* Main Content Body */}
-      <div className="font-sans text-base leading-relaxed text-foreground/90">
-        <PostContent content={post.content} />
+      <div className={`text-base leading-relaxed text-foreground/90 ${BLOG_FONT_STYLES[readerFont]?.className || "font-claude"}`}>
+        <PostContent content={post.content} defaultFont={readerFont} />
       </div>
 
       {/* Footer Tags & Navigation */}

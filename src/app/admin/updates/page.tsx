@@ -15,6 +15,7 @@ import { BlogPost, normalizeImageUrl } from "@/lib/data";
 import {
   PostContent,
   HIGHLIGHT_THEME_STYLES,
+  BLOG_FONT_STYLES,
 } from "@/components/blog/post-content";
 import toast from "react-hot-toast";
 import {
@@ -44,6 +45,7 @@ import {
   ALargeSmall,
   ChevronDown,
   Check,
+  Type,
 } from "lucide-react";
 
 function UpdatesManagerContent() {
@@ -78,17 +80,20 @@ function UpdatesManagerContent() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toolbarMenuRef = useRef<HTMLDivElement>(null);
 
-  // Font Size and Highlighter UI States
+  // Font Size, Font Style, and Highlighter UI States
   const [fontSizeMenuOpen, setFontSizeMenuOpen] = useState(false);
+  const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [highlighterMenuOpen, setHighlighterMenuOpen] = useState(false);
   const [selectedHighlightColor, setSelectedHighlightColor] = useState<string>("theme");
   const [editorFontSize, setEditorFontSize] = useState<"xs" | "sm" | "base">("sm");
+  const [fontFamily, setFontFamily] = useState<string>("claude");
 
   // Close toolbar popups when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (toolbarMenuRef.current && !toolbarMenuRef.current.contains(e.target as Node)) {
         setFontSizeMenuOpen(false);
+        setFontMenuOpen(false);
         setHighlighterMenuOpen(false);
       }
     };
@@ -121,6 +126,7 @@ function UpdatesManagerContent() {
     setCoverImage(post.coverImage || "");
     setTags(post.tags || []);
     setIsPublic(post.isPublic !== false);
+    setFontFamily(post.fontFamily || "claude");
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -157,6 +163,7 @@ function UpdatesManagerContent() {
     setCoverImage("");
     setTags([]);
     setIsPublic(true);
+    setFontFamily("claude");
     setViewMode("write");
   };
 
@@ -275,6 +282,7 @@ function UpdatesManagerContent() {
       coverImage: normalizeImageUrl(coverImage.trim()),
       tags,
       isPublic,
+      fontFamily,
       readTimeMinutes: readTime,
       order: Date.now(),
       updatedAt: now,
@@ -477,6 +485,50 @@ function UpdatesManagerContent() {
           </div>
         </div>
 
+        {/* Primary Article Typography Style */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-muted-foreground uppercase flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <Type className="w-3.5 h-3.5 text-primary" /> Primary Article Typography
+            </span>
+            <span className="text-[10px] font-mono text-muted-foreground">
+              Aesthetic presets (Medium, Claude, Classic)
+            </span>
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {Object.values(BLOG_FONT_STYLES).map((font) => {
+              const isSelected = fontFamily === font.key;
+              return (
+                <button
+                  key={font.key}
+                  type="button"
+                  onClick={() => setFontFamily(font.key)}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    isSelected
+                      ? "border-primary bg-primary/10 text-primary shadow-xs ring-1 ring-primary/30"
+                      : "border-border/60 bg-background/50 hover:bg-accent/60 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className={`text-xs font-bold truncate ${font.className} ${isSelected ? "text-primary" : "text-foreground"}`}>
+                        {font.name}
+                      </span>
+                      {isSelected && <Check className="w-3 h-3 text-primary shrink-0" />}
+                    </div>
+                    <div className="text-[10px] opacity-75 truncate mt-0.5">
+                      {font.category}
+                    </div>
+                  </div>
+                  <div className={`text-[13px] mt-2 font-medium opacity-90 truncate ${font.className}`}>
+                    Aa Qq 123
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Medium-style Editor Section */}
         <div className="space-y-2 pt-2">
           <div
@@ -572,6 +624,71 @@ function UpdatesManagerContent() {
                     ))}
                     <div className="px-2 pt-1 border-t border-border/40 text-[10px] text-muted-foreground font-mono">
                       Wraps selection or inserts tag
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Font Style & Aesthetic Dropdown (Claude, Medium, Modern, Classic, Playfair, Mono) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFontMenuOpen((prev) => !prev);
+                    setFontSizeMenuOpen(false);
+                    setHighlighterMenuOpen(false);
+                  }}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono transition-colors cursor-pointer ${
+                    fontMenuOpen
+                      ? "bg-primary/15 text-primary font-bold shadow-xs"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                  title="Font Style (Claude, Medium, Modern Sans, Classic Serif, etc.)"
+                  aria-expanded={fontMenuOpen}
+                >
+                  <Type className="w-4 h-4 text-primary" />
+                  <span className="hidden sm:inline">Font</span>
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </button>
+
+                {fontMenuOpen && (
+                  <div className="absolute left-0 top-full mt-1.5 z-40 w-72 p-2 rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-xl space-y-1">
+                    <div className="px-2 py-1 text-[10px] font-mono text-muted-foreground uppercase tracking-wider font-semibold border-b border-border/40 pb-1 flex items-center justify-between">
+                      <span>Typography Style</span>
+                      <span className="text-[9px] text-primary">Aesthetic</span>
+                    </div>
+
+                    <div className="space-y-1 max-h-72 overflow-y-auto">
+                      {Object.values(BLOG_FONT_STYLES).map((font) => (
+                        <button
+                          key={font.key}
+                          type="button"
+                          onClick={() => {
+                            insertTextAtCursor(`[font=${font.key}]`, `[/font]`, `${font.name} text`);
+                            setFontMenuOpen(false);
+                          }}
+                          className="w-full flex flex-col p-2 rounded-lg text-left hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={`text-sm font-semibold text-foreground ${font.className}`}>
+                              {font.name}
+                            </span>
+                            <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded bg-muted/60">
+                              {font.category}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            {font.sourceStyle}
+                          </div>
+                          <div className={`text-xs text-foreground/80 mt-1 italic line-clamp-1 ${font.className}`}>
+                            &ldquo;{font.sampleText}&rdquo;
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="px-2 pt-1.5 border-t border-border/40 text-[10px] text-muted-foreground font-mono">
+                      Wraps selection with [font=style]...[/font]
                     </div>
                   </div>
                 )}
@@ -844,7 +961,10 @@ function UpdatesManagerContent() {
 
             {viewMode === "preview" && (
               <div className="p-6 rounded-xl border border-border/50 bg-background/80 min-h-[380px] max-w-3xl mx-auto">
-                <PostContent content={content || "*Nothing to preview yet. Write some markdown above!*"} />
+                <PostContent
+                  content={content || "*Nothing to preview yet. Write some markdown above!*"}
+                  defaultFont={fontFamily}
+                />
               </div>
             )}
 
@@ -863,7 +983,10 @@ function UpdatesManagerContent() {
                   }`}
                 />
                 <div className="p-4 rounded-xl border border-border/50 bg-background/80 overflow-y-auto max-h-[380px]">
-                  <PostContent content={content || "*Live preview will appear here...*"} />
+                  <PostContent
+                    content={content || "*Live preview will appear here...*"}
+                    defaultFont={fontFamily}
+                  />
                 </div>
               </div>
             )}
@@ -877,7 +1000,7 @@ function UpdatesManagerContent() {
               </span>
               <span className="hidden lg:inline text-border">•</span>
               <span className="hidden lg:inline text-[11px] text-muted-foreground/80">
-                Formatting: <code className="text-primary font-bold">==theme highlight==</code> • <code className="text-primary font-bold">==yellow:note==</code> • <code className="text-primary font-bold">[size=lg]large text[/size]</code>
+                Formatting: <code className="text-primary font-bold">==highlight==</code> • <code className="text-primary font-bold">[size=lg]size[/size]</code> • <code className="text-primary font-bold">[font=claude]style[/font]</code>
               </span>
             </div>
             <span>

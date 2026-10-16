@@ -11,6 +11,13 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-card: var(--card);
+
+  --font-claude: var(--font-newsreader), "Charter", "Tiempos Headline", Georgia, serif;
+  --font-medium-serif: var(--font-merriweather), "Charter", "Source Serif 4", Georgia, serif;
+  --font-modern-sans: var(--font-jakarta), var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-classic-serif: var(--font-garamond), var(--font-lora), "Times New Roman", Garamond, serif;
+  --font-aesthetic-display: var(--font-playfair), "Didot", "Bodoni MT", Georgia, serif;
+  --font-aesthetic-mono: var(--font-mono-jb), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 @layer base {
@@ -89,4 +96,29 @@ html.theme-transitioning *::after {
   .animate-marquee-ltr {
     animation-play-state: paused !important;
   }
+}
+
+/* ─── Editorial & Aesthetic Blog Fonts ───────────────────────────────── */
+.font-claude {
+  font-family: var(--font-newsreader), "Charter", "Tiempos Headline", "Copse", Georgia, serif;
+}
+
+.font-medium-serif {
+  font-family: var(--font-merriweather), "Charter", "Source Serif 4", Georgia, Cambria, serif;
+}
+
+.font-modern-sans {
+  font-family: var(--font-jakarta), var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+.font-classic-serif {
+  font-family: var(--font-garamond), var(--font-lora), "Times New Roman", Garamond, serif;
+}
+
+.font-aesthetic-display {
+  font-family: var(--font-playfair), "Didot", "Bodoni MT", Georgia, serif;
+}
+
+.font-aesthetic-mono {
+  font-family: var(--font-mono-jb), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }

@@ -162,6 +162,7 @@ export interface BlogPost {
   tags: string[];
   isPublic: boolean;
   readTimeMinutes: number;
+  fontFamily?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -249,6 +250,7 @@ export const fallbackBlogPosts: BlogPost[] = [
     tags: ["Philosophy", "Engineering", "Teaching"],
     isPublic: true,
     readTimeMinutes: 3,
+    fontFamily: "claude",
     createdAt: new Date("2026-03-01T10:00:00Z").toISOString(),
     updatedAt: new Date("2026-03-01T10:00:00Z").toISOString(),
   },

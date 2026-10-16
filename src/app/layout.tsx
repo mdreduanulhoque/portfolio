@@ -1,21 +1,20 @@
 import type { Metadata } from "next";
-import { Lora, Inter } from "next/font/google";
+import {
+  inter,
+  lora,
+  newsreader,
+  merriweather,
+  plusJakarta,
+  ebGaramond,
+  playfair,
+  jetbrainsMono,
+} from "@/lib/fonts";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "react-hot-toast";
-
-const lora = Lora({
-  variable: "--font-lora",
-  subsets: ["latin"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://reduanulhoque.web.app"),
@@ -77,7 +76,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${lora.variable} font-sans antialiased min-h-screen flex flex-col`}>
+      <body
+        className={`${inter.variable} ${lora.variable} ${newsreader.variable} ${merriweather.variable} ${plusJakarta.variable} ${ebGaramond.variable} ${playfair.variable} ${jetbrainsMono.variable} font-sans antialiased min-h-screen flex flex-col`}
+      >
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

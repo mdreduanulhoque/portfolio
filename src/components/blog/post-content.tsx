@@ -3,17 +3,84 @@
 import React from "react";
 import { isSafeUrl, normalizeImageUrl } from "@/lib/data";
 
-interface PostContentProps {
-  content: string;
+// ─── Font Styles & Typographic Aesthetics ─────────────────────────────
+
+export type BlogFontFamily =
+  | "claude"
+  | "medium"
+  | "modern"
+  | "classic"
+  | "playfair"
+  | "mono";
+
+export interface BlogFontStyleOption {
+  key: BlogFontFamily;
+  name: string;
+  category: string;
+  sourceStyle: string;
+  description: string;
+  sampleText: string;
+  className: string;
 }
 
-// Helper to extract YouTube video ID
-export function extractYouTubeId(url: string): string | null {
-  if (!url) return null;
-  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-  const match = url.trim().match(regExp);
-  return match ? match[1] : null;
-}
+export const BLOG_FONT_STYLES: Record<string, BlogFontStyleOption> = {
+  claude: {
+    key: "claude",
+    name: "Claude Editorial",
+    category: "Literary Screen Serif",
+    sourceStyle: "Newsreader / Tiémpos (Claude.ai)",
+    description: "Warm, intellectual, reflective reading serif optimized for digital essays",
+    sampleText: "The art of thinking deeply in an era of rapid answers.",
+    className: "font-claude",
+  },
+  medium: {
+    key: "medium",
+    name: "Medium Classic",
+    category: "Editorial Long-Form",
+    sourceStyle: "Charter / Merriweather (Medium.com)",
+    description: "Iconic publication serif with high x-height and maximum reading stamina",
+    sampleText: "Long-form journalism engineered for timeless clarity.",
+    className: "font-medium-serif",
+  },
+  modern: {
+    key: "modern",
+    name: "Modern Aesthetic",
+    category: "Contemporary Tech",
+    sourceStyle: "Plus Jakarta Sans (Linear / Stripe)",
+    description: "Clean, geometric, contemporary tech product aesthetic",
+    sampleText: "Designing sleek architectures for the next generation of web.",
+    className: "font-modern-sans",
+  },
+  classic: {
+    key: "classic",
+    name: "Classic Timeless",
+    category: "Academic Book Press",
+    sourceStyle: "EB Garamond / Renaissance",
+    description: "Timeless elegance of classical book printing and humanistic philosophy",
+    sampleText: "Wisdom preserved across generations through timeless prose.",
+    className: "font-classic-serif",
+  },
+  playfair: {
+    key: "playfair",
+    name: "Editorial Display",
+    category: "Vogue / High Contrast",
+    sourceStyle: "Playfair Display (Kinfolk / Vogue)",
+    description: "High-contrast luxury serif for prominent pull quotes and titles",
+    sampleText: "Aesthetic craftsmanship in every visual dimension.",
+    className: "font-aesthetic-display",
+  },
+  mono: {
+    key: "mono",
+    name: "Developer Monospace",
+    category: "Terminal / Hacker",
+    sourceStyle: "JetBrains Mono (Modern Terminal)",
+    description: "Crisp technical monospace for code, logs, and technical journals",
+    sampleText: "01001001 01101110 01101110 01101111 01110110 01100001 01110100 01100101",
+    className: "font-aesthetic-mono",
+  },
+};
+
+// ─── Highlighter Styles ───────────────────────────────────────────────
 
 export interface HighlightStyle {
   label: string;
@@ -98,6 +165,8 @@ export const HIGHLIGHT_THEME_STYLES: Record<string, HighlightStyle> = {
     className: "bg-red-300/40 text-red-950 dark:bg-red-400/20 dark:text-red-200 border-b border-red-400/40 px-1.5 py-0.5 rounded-md font-medium box-decoration-clone inline transition-colors",
   },
 };
+
+// ─── Font Size Styles ─────────────────────────────────────────────────
 
 export interface FontSizeOption {
   key: string;
@@ -194,8 +263,10 @@ export const FONT_SIZE_STYLES: Record<string, FontSizeOption> = {
   },
 };
 
+// ─── Inline Token Parser ──────────────────────────────────────────────
+
 const RICH_INLINE_REGEX =
-  /(\[([^\]]+)\]\(([^)]+)\))|(\[size=([a-zA-Z0-9]+)\]([\s\S]*?)\[\/size\])|(<small>([\s\S]*?)<\/small>)|(<big>([\s\S]*?)<\/big>)|(==(?:(theme|primary|yellow|amber|green|emerald|purple|violet|rose|pink|cyan|sky|blue|orange|red):)?([^\n=]+)==)|(<mark(?: class="([^"]*)")?>([\s\S]*?)<\/mark>)|(\*\*([^*\n]+)\*\*)|(\*([^*\n]+)\*)/g;
+  /(\[([^\]]+)\]\(([^)]+)\))|(\[size=([a-zA-Z0-9]+)\]([\s\S]*?)\[\/size\])|(\[font=([a-zA-Z0-9_-]+)\]([\s\S]*?)\[\/font\])|(<small>([\s\S]*?)<\/small>)|(<big>([\s\S]*?)<\/big>)|(==(?:(theme|primary|yellow|amber|green|emerald|purple|violet|rose|pink|cyan|sky|blue|orange|red):)?([^\n=]+)==)|(<mark(?: class="([^"]*)")?>([\s\S]*?)<\/mark>)|(\*\*([^*\n]+)\*\*)|(\*([^*\n]+)\*)/g;
 
 function parseRichInline(text: string, keyPrefix: string = "root"): React.ReactNode[] {
   const regex = new RegExp(RICH_INLINE_REGEX.source, "g");
@@ -243,49 +314,58 @@ function parseRichInline(text: string, keyPrefix: string = "root"): React.ReactN
         </span>
       );
     } else if (match[7]) {
+      // Font family style: match[8]=fontKey, match[9]=content
+      const fontKey = match[8].toLowerCase();
+      const fontStyle = BLOG_FONT_STYLES[fontKey] || BLOG_FONT_STYLES.claude;
+      nodes.push(
+        <span key={key} className={fontStyle.className}>
+          {parseRichInline(match[9], `${key}-fn`)}
+        </span>
+      );
+    } else if (match[10]) {
       // <small>
       nodes.push(
         <span key={key} className={FONT_SIZE_STYLES.sm.className}>
-          {parseRichInline(match[8], `${key}-sm`)}
+          {parseRichInline(match[11], `${key}-sm`)}
         </span>
       );
-    } else if (match[9]) {
+    } else if (match[12]) {
       // <big>
       nodes.push(
         <span key={key} className={FONT_SIZE_STYLES.lg.className}>
-          {parseRichInline(match[10], `${key}-bg`)}
+          {parseRichInline(match[13], `${key}-bg`)}
         </span>
       );
-    } else if (match[11]) {
-      // Highlight ==...== : match[12]=color, match[13]=content
-      const colorKey = (match[12] || "theme").toLowerCase();
-      const styleConfig = HIGHLIGHT_THEME_STYLES[colorKey] || HIGHLIGHT_THEME_STYLES.theme;
-      nodes.push(
-        <mark key={key} className={styleConfig.className}>
-          {parseRichInline(match[13], `${key}-hl`)}
-        </mark>
-      );
     } else if (match[14]) {
-      // Highlight <mark>: match[15]=class, match[16]=content
+      // Highlight ==...== : match[15]=color, match[16]=content
       const colorKey = (match[15] || "theme").toLowerCase();
       const styleConfig = HIGHLIGHT_THEME_STYLES[colorKey] || HIGHLIGHT_THEME_STYLES.theme;
       nodes.push(
         <mark key={key} className={styleConfig.className}>
-          {parseRichInline(match[16], `${key}-mk`)}
+          {parseRichInline(match[16], `${key}-hl`)}
         </mark>
       );
     } else if (match[17]) {
-      // Bold: match[18]=content
+      // Highlight <mark>: match[18]=class, match[19]=content
+      const colorKey = (match[18] || "theme").toLowerCase();
+      const styleConfig = HIGHLIGHT_THEME_STYLES[colorKey] || HIGHLIGHT_THEME_STYLES.theme;
+      nodes.push(
+        <mark key={key} className={styleConfig.className}>
+          {parseRichInline(match[19], `${key}-mk`)}
+        </mark>
+      );
+    } else if (match[20]) {
+      // Bold: match[21]=content
       nodes.push(
         <strong key={key} className="font-bold text-foreground">
-          {parseRichInline(match[18], `${key}-b`)}
+          {parseRichInline(match[21], `${key}-b`)}
         </strong>
       );
-    } else if (match[19]) {
-      // Italic: match[20]=content
+    } else if (match[22]) {
+      // Italic: match[23]=content
       nodes.push(
         <em key={key} className="italic">
-          {parseRichInline(match[20], `${key}-i`)}
+          {parseRichInline(match[23], `${key}-i`)}
         </em>
       );
     }
@@ -318,8 +398,26 @@ export function renderInlineFormatting(text: string): React.ReactNode {
   });
 }
 
-export function PostContent({ content }: PostContentProps) {
+// ─── Post Content Renderer Component ──────────────────────────────────
+
+export interface PostContentProps {
+  content: string;
+  defaultFont?: string;
+  className?: string;
+}
+
+export function extractYouTubeId(url: string): string | null {
+  if (!url) return null;
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const match = url.trim().match(regExp);
+  return match ? match[1] : null;
+}
+
+export function PostContent({ content, defaultFont = "claude", className = "" }: PostContentProps) {
   if (!content) return null;
+
+  const resolvedDefaultFontClass =
+    BLOG_FONT_STYLES[defaultFont]?.className || BLOG_FONT_STYLES.claude.className;
 
   // Split lines into blocks
   const lines = content.split("\n");
@@ -334,12 +432,17 @@ export function PostContent({ content }: PostContentProps) {
   let isNumberedList = false;
 
   let inCustomSize: string | null = null;
+  let inCustomFont: string | null = null;
 
   const flushList = (key: string) => {
     if (!inList || listItems.length === 0) return;
+    const listFontClass = inCustomFont
+      ? BLOG_FONT_STYLES[inCustomFont]?.className || ""
+      : resolvedDefaultFontClass;
+
     if (isNumberedList) {
       elements.push(
-        <ol key={key} className="list-decimal list-inside space-y-1.5 my-4 text-foreground/90 leading-relaxed pl-2 font-sans">
+        <ol key={key} className={`list-decimal list-inside space-y-1.5 my-4 text-foreground/90 leading-relaxed pl-2 ${listFontClass}`}>
           {listItems.map((item, idx) => (
             <li key={idx}>{renderInlineFormatting(item)}</li>
           ))}
@@ -347,7 +450,7 @@ export function PostContent({ content }: PostContentProps) {
       );
     } else {
       elements.push(
-        <ul key={key} className="list-disc list-inside space-y-1.5 my-4 text-foreground/90 leading-relaxed pl-2 font-sans">
+        <ul key={key} className={`list-disc list-inside space-y-1.5 my-4 text-foreground/90 leading-relaxed pl-2 ${listFontClass}`}>
           {listItems.map((item, idx) => (
             <li key={idx}>{renderInlineFormatting(item)}</li>
           ))}
@@ -372,7 +475,7 @@ export function PostContent({ content }: PostContentProps) {
       } else {
         inCodeBlock = false;
         elements.push(
-          <div key={`code-${i}`} className="my-6 rounded-xl overflow-hidden border border-border/60 bg-muted/50 dark:bg-slate-950">
+          <div key={`code-${i}`} className="my-6 rounded-xl overflow-hidden border border-border/60 bg-muted/50 dark:bg-slate-950 font-mono">
             {codeBlockLang && (
               <div className="px-4 py-1.5 bg-muted/80 border-b border-border/40 text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
                 {codeBlockLang}
@@ -405,6 +508,19 @@ export function PostContent({ content }: PostContentProps) {
       continue;
     }
 
+    // Block-level custom font family tags [font=claude] ... [/font]
+    const fontOpenMatch = line.match(/^\[font=([a-zA-Z0-9_-]+)\]$/i);
+    if (fontOpenMatch) {
+      flushList(`list-${i}`);
+      inCustomFont = fontOpenMatch[1].toLowerCase();
+      continue;
+    }
+    if (line === "[/font]") {
+      flushList(`list-${i}`);
+      inCustomFont = null;
+      continue;
+    }
+
     // Blank line
     if (!line) {
       flushList(`list-${i}`);
@@ -432,10 +548,14 @@ export function PostContent({ content }: PostContentProps) {
     // If we were in a list and hit another element, flush it
     flushList(`list-${i}`);
 
+    const activeFontClass = inCustomFont
+      ? BLOG_FONT_STYLES[inCustomFont]?.className || ""
+      : resolvedDefaultFontClass;
+
     // Check for Headings
     if (line.startsWith("# ")) {
       elements.push(
-        <h1 key={`h1-${i}`} className="text-3xl sm:text-4xl font-bold font-lora text-foreground mt-8 mb-4 tracking-tight">
+        <h1 key={`h1-${i}`} className={`text-3xl sm:text-4xl font-bold text-foreground mt-8 mb-4 tracking-tight ${activeFontClass}`}>
           {renderInlineFormatting(line.slice(2))}
         </h1>
       );
@@ -444,7 +564,7 @@ export function PostContent({ content }: PostContentProps) {
 
     if (line.startsWith("## ")) {
       elements.push(
-        <h2 key={`h2-${i}`} className="text-2xl sm:text-3xl font-bold font-lora text-foreground mt-7 mb-3 tracking-tight">
+        <h2 key={`h2-${i}`} className={`text-2xl sm:text-3xl font-bold text-foreground mt-7 mb-3 tracking-tight ${activeFontClass}`}>
           {renderInlineFormatting(line.slice(3))}
         </h2>
       );
@@ -453,7 +573,7 @@ export function PostContent({ content }: PostContentProps) {
 
     if (line.startsWith("### ")) {
       elements.push(
-        <h3 key={`h3-${i}`} className="text-xl sm:text-2xl font-bold font-lora text-foreground mt-6 mb-2 tracking-tight">
+        <h3 key={`h3-${i}`} className={`text-xl sm:text-2xl font-bold text-foreground mt-6 mb-2 tracking-tight ${activeFontClass}`}>
           {renderInlineFormatting(line.slice(4))}
         </h3>
       );
@@ -465,7 +585,7 @@ export function PostContent({ content }: PostContentProps) {
       elements.push(
         <blockquote
           key={`quote-${i}`}
-          className="border-l-4 border-primary pl-4 py-2 my-5 text-muted-foreground font-lora italic text-base bg-primary/5 rounded-r-lg"
+          className={`border-l-4 border-primary pl-4 py-2.5 my-5 text-muted-foreground italic text-base sm:text-lg bg-primary/5 rounded-r-lg ${activeFontClass}`}
         >
           {renderInlineFormatting(line.slice(2))}
         </blockquote>
@@ -546,10 +666,13 @@ export function PostContent({ content }: PostContentProps) {
       continue;
     }
 
-    // Regular paragraph (respects active block-level font size if active)
+    // Regular paragraph (respects active block-level font size and font family)
     const activeSizeClass = inCustomSize ? (FONT_SIZE_STYLES[inCustomSize]?.className || "") : "";
     elements.push(
-      <p key={`p-${i}`} className={`my-4 text-foreground/90 font-sans leading-relaxed ${activeSizeClass || "text-base"}`}>
+      <p
+        key={`p-${i}`}
+        className={`my-4 text-foreground/90 leading-relaxed ${activeFontClass} ${activeSizeClass || "text-base sm:text-[17px]"}`}
+      >
         {renderInlineFormatting(rawLine)}
       </p>
     );
@@ -558,5 +681,9 @@ export function PostContent({ content }: PostContentProps) {
   // Flush any trailing list
   flushList(`list-end`);
 
-  return <div className="prose-container space-y-1">{elements}</div>;
+  return (
+    <div className={`prose-container space-y-1 ${resolvedDefaultFontClass} ${className}`}>
+      {elements}
+    </div>
+  );
 }
