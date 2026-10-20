@@ -83,6 +83,7 @@ export function Navbar() {
 
     const isHome = pathname === "/";
     const isUpdates = pathname?.startsWith("/updates") ?? false;
+    const isCertificates = pathname?.startsWith("/certificates") ?? false;
     const resumeUrl = profile?.resumeUrl || "/md_reduanul_hoque_resume.pdf";
 
     const getSectionHref = (hash: string) => {
@@ -101,6 +102,16 @@ export function Navbar() {
                         <Link href={getSectionHref("#about")} className="transition-colors hover:text-primary">About</Link>
                         <Link href={getSectionHref("#projects")} className="transition-colors hover:text-primary">Projects</Link>
                         <Link href={getSectionHref("#classes")} className="transition-colors hover:text-primary">Classes</Link>
+                        <Link
+                            href={isHome ? "#certificates" : "/certificates"}
+                            className={`transition-colors relative py-1 hover:text-primary ${
+                                isCertificates
+                                    ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+                                    : "text-muted-foreground hover:text-primary"
+                            }`}
+                        >
+                            Certificates
+                        </Link>
                         <Link href={getSectionHref("#skills")} className="hidden sm:inline-block transition-colors hover:text-primary">Skills</Link>
                         <Link href={getSectionHref("#contact")} className="transition-colors hover:text-primary">Contact</Link>
                         <Link

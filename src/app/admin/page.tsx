@@ -6,8 +6,8 @@ import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, writeBatch, collection } from "firebase/firestore";
-import type { Profile, Education, Experience, Achievement, Project, Skill, ClassItem, SocialLinks, BlogPost } from "@/lib/data";
-import { fallbackBlogPosts, fallbackProfile, fallbackSocialLinks, fallbackEducation, fallbackExperience, fallbackAchievements, fallbackProjects, fallbackSkills, fallbackClasses } from "@/lib/data";
+import type { Profile, Education, Experience, Achievement, Project, Skill, ClassItem, Certificate, SocialLinks, BlogPost } from "@/lib/data";
+import { fallbackBlogPosts, fallbackProfile, fallbackSocialLinks, fallbackEducation, fallbackExperience, fallbackAchievements, fallbackProjects, fallbackSkills, fallbackClasses, fallbackCertificates } from "@/lib/data";
 import {
   User,
   GraduationCap,
@@ -15,6 +15,7 @@ import {
   Trophy,
   Code2,
   BookOpen,
+  Award,
   ArrowRight,
   Database,
   Loader2,
@@ -34,6 +35,7 @@ export default function AdminDashboardOverview() {
   const { data: projects } = useFirestoreCollection<Project>("projects");
   const { data: skills } = useFirestoreCollection<Skill>("skills");
   const { data: classes } = useFirestoreCollection<ClassItem>("classes");
+  const { data: certificates } = useFirestoreCollection<Certificate>("certificates");
   const { data: updates } = useFirestoreCollection<BlogPost>("updates");
 
   const [seeding, setSeeding] = useState(false);
@@ -47,6 +49,7 @@ export default function AdminDashboardOverview() {
     { name: "Projects", count: projects.length, href: "/admin/projects", icon: Code2, desc: "Manage coding projects, features, tech stack, and URLs." },
     { name: "Skills", count: skills.length, href: "/admin/skills", icon: BookOpen, desc: "Manage skills list, file size style, and categories." },
     { name: "Classes", count: classes.length, href: "/admin/classes", icon: BookOpen, desc: "Manage YouTube classes, descriptions, and video IDs." },
+    { name: "Certificates", count: certificates.length, href: "/admin/certificates", icon: Award, desc: "Manage Google Drive PDF certificates, issuers, dates, and awards." },
     { name: "Social Links", count: socialLinks ? 1 : 0, href: "/admin/social-links", icon: Share2, desc: "Manage social profiles, email, and resume URLs." },
   ];
 
@@ -107,6 +110,14 @@ export default function AdminDashboardOverview() {
       // Classes
       fallbackClasses.forEach((item) => {
         const docRef = doc(db, "classes", item.id);
+        const data = { ...item };
+        delete (data as { id?: string }).id;
+        batch.set(docRef, data);
+      });
+
+      // Certificates
+      fallbackCertificates.forEach((item) => {
+        const docRef = doc(db, "certificates", item.id);
         const data = { ...item };
         delete (data as { id?: string }).id;
         batch.set(docRef, data);

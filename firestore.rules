@@ -3,7 +3,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
-      return request.auth != null && request.auth.uid == "748z57UkoWVK6Y3q8kvwFFEeLkl1";
+      return request.auth != null && (
+        request.auth.uid == "748z57UkoWVK6Y3q8kvwFFEeLkl1" ||
+        request.auth.token.email == "mdreduanulhoquesadik@gmail.com"
+      );
     }
 
     // Updates / Blog posts: public posts are readable by anyone; private posts require admin
@@ -42,6 +45,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     match /classes/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /certificates/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }

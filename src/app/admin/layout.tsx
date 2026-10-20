@@ -14,6 +14,7 @@ import {
   Code2,
   BookOpen,
   Share2,
+  Award,
   LogOut,
   LayoutDashboard,
   Newspaper,
@@ -32,6 +33,7 @@ const navigationItems = [
   { name: "Projects", href: "/admin/projects", icon: Code2 },
   { name: "Skills", href: "/admin/skills", icon: BookOpen },
   { name: "Classes", href: "/admin/classes", icon: BookOpen },
+  { name: "Certificates", href: "/admin/certificates", icon: Award },
   { name: "Social Links", href: "/admin/social-links", icon: Share2 },
 ];
 

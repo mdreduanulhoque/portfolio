@@ -51,6 +51,62 @@ export function normalizeImageUrl(url: string | undefined | null): string {
   return trimmed;
 }
 
+/**
+ * Extracts a Google Drive File ID from any sharing link, open link, uc link,
+ * or returns the raw ID if already provided.
+ */
+export function extractDriveFileId(urlOrId: string | undefined | null): string {
+  if (!urlOrId) return "";
+  const trimmed = urlOrId.trim();
+
+  // /file/d/{ID}
+  const filePattern = /\/file\/d\/([a-zA-Z0-9_-]{20,})/i;
+  const fileMatch = trimmed.match(filePattern);
+  if (fileMatch && fileMatch[1]) return fileMatch[1];
+
+  // id={ID}
+  const idPattern = /[?&]id=([a-zA-Z0-9_-]{20,})/i;
+  const idMatch = trimmed.match(idPattern);
+  if (idMatch && idMatch[1]) return idMatch[1];
+
+  // Raw alphanumeric ID (typically 28-44 chars)
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return "";
+}
+
+export const GOOGLE_DRIVE_CERTIFICATES_FOLDER =
+  "https://drive.google.com/drive/folders/1PBa---xjqgdlkNpy4bL4Tzask0NeRSxQ?usp=sharing";
+
+/**
+ * Generates an embeddable Google Drive PDF preview URL for iframes.
+ */
+export function getDrivePdfPreviewUrl(urlOrId: string | undefined | null): string {
+  const id = extractDriveFileId(urlOrId);
+  if (!id) return "";
+  return `https://drive.google.com/file/d/${id}/preview`;
+}
+
+/**
+ * Generates a high-resolution PNG image thumbnail URL of a Google Drive PDF's first page.
+ */
+export function getDriveThumbnailUrl(urlOrId: string | undefined | null): string {
+  const id = extractDriveFileId(urlOrId);
+  if (!id) return "";
+  return `https://lh3.googleusercontent.com/d/${id}=w800`;
+}
+
+/**
+ * Generates a direct Google Drive view sharing link.
+ */
+export function getDriveViewUrl(urlOrId: string | undefined | null): string {
+  const id = extractDriveFileId(urlOrId);
+  if (!id) return urlOrId || "";
+  return `https://drive.google.com/file/d/${id}/view?usp=sharing`;
+}
+
 export async function swapCollectionOrder<T extends { id: string; order: number }>(
   collectionName: string,
   items: T[],
@@ -144,6 +200,17 @@ export interface ClassItem {
   order: number;
 }
 
+export interface Certificate {
+  id: string;
+  title: string;
+  issuer: string;
+  issueDate?: string;
+  description?: string;
+  driveUrl: string;
+  fileId?: string;
+  order: number;
+}
+
 export interface SocialLinks {
   email: string;
   linkedin: string;
@@ -223,6 +290,10 @@ export async function getSkills(): Promise<Skill[]> {
 
 export async function getClasses(): Promise<ClassItem[]> {
   return getOrderedCollection<ClassItem>("classes");
+}
+
+export async function getCertificates(): Promise<Certificate[]> {
+  return getOrderedCollection<Certificate>("certificates");
 }
 
 export async function getSocialLinks(): Promise<SocialLinks | null> {
@@ -362,4 +433,67 @@ export const fallbackClasses: ClassItem[] = [
   { id: "cl1", title: "Thread in Java || Question Solve || OOP", videoId: "uobWZ7FA6XM", description: "A detailed problem-solving session covering Threads in Object-Oriented Programming.", url: "https://youtu.be/uobWZ7FA6XM?si=87TNoOs94kpDdL2S", order: 0 },
   { id: "cl2", title: "GUI - Design Part in Java", videoId: "Rs6k1PNkVf4", description: "A comprehensive guide on designing Graphical User Interfaces (GUI) in Java.", url: "https://youtu.be/Rs6k1PNkVf4?si=nMWrT2wIJMuSGoRP", order: 1 },
   { id: "cl3", title: "ICS One Shot Class For Mid", videoId: "GWtQ2FKl6ks", description: "A complete one-shot review class designed to prepare students for the Introduction to Computer Systems (ICS) midterm.", url: "https://youtu.be/GWtQ2FKl6ks?si=scAGxTYf92YBeWY-", order: 2 },
+];
+
+export const fallbackCertificates: Certificate[] = [
+  {
+    id: "cert1",
+    title: "BeatCode 253 - Certificate of Achievement",
+    issuer: "Phitron & App Forum",
+    issueDate: "2024",
+    description: "Recognized as 8th Runner-up & Bronze Medalist at BeatCode 253 competitive programming contest.",
+    driveUrl: "https://drive.google.com/file/d/1_crI2rnNAPRxxTLNAKoS9sc17r50JuRE/view?usp=sharing",
+    fileId: "1_crI2rnNAPRxxTLNAKoS9sc17r50JuRE",
+    order: 0,
+  },
+  {
+    id: "cert2",
+    title: "The Complete Full-Stack Web Development Bootcamp",
+    issuer: "Udemy / Angela Yu",
+    issueDate: "2024",
+    description: "Comprehensive Full-Stack Web Development certification covering frontend and backend engineering.",
+    driveUrl: "https://drive.google.com/file/d/1LCASjuVEyCQ5HAIldBoa5p984GCQbyUN/view?usp=sharing",
+    fileId: "1LCASjuVEyCQ5HAIldBoa5p984GCQbyUN",
+    order: 1,
+  },
+  {
+    id: "cert3",
+    title: "UIUCPC Batch Representative Recognition",
+    issuer: "UIU Competitive Programming Community",
+    issueDate: "2024 - Present",
+    description: "Recognition for leadership and mentoring as Batch Representative at UIU CPC.",
+    driveUrl: "https://drive.google.com/file/d/1Loi3_x_7HfSzIzCvEEPeYA6MhehJFEoD/view?usp=sharing",
+    fileId: "1Loi3_x_7HfSzIzCvEEPeYA6MhehJFEoD",
+    order: 2,
+  },
+  {
+    id: "cert4",
+    title: "Impactful Presentations",
+    issuer: "Grameenphone Academy",
+    issueDate: "2024",
+    description: "Professional certification on storytelling, presentation design, and high-impact corporate communications.",
+    driveUrl: "https://drive.google.com/file/d/1lIN3XrXcXdMN1SeQ0fxPrWHYu4QWz1CC/view?usp=sharing",
+    fileId: "1lIN3XrXcXdMN1SeQ0fxPrWHYu4QWz1CC",
+    order: 3,
+  },
+  {
+    id: "cert5",
+    title: "Build Your Future Before Graduation",
+    issuer: "Grameenphone Academy",
+    issueDate: "2024",
+    description: "Corporate readiness and career planning certification focused on pre-graduation competencies.",
+    driveUrl: "https://drive.google.com/file/d/1Xyx91AkjckZcdb6y9c8-UBvAXCzDuWpF/view?usp=sharing",
+    fileId: "1Xyx91AkjckZcdb6y9c8-UBvAXCzDuWpF",
+    order: 4,
+  },
+  {
+    id: "cert6",
+    title: "BeatCode 253 - Recognition Poster",
+    issuer: "BeatCode Community",
+    issueDate: "2024",
+    description: "Official recognition poster commemorating the Top 10 finish in algorithmic problem solving.",
+    driveUrl: "https://drive.google.com/file/d/1Q65d1UB7QbHnckt40w9t-l3NCHzyRnEs/view?usp=sharing",
+    fileId: "1Q65d1UB7QbHnckt40w9t-l3NCHzyRnEs",
+    order: 5,
+  },
 ];
