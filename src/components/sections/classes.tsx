@@ -16,9 +16,9 @@ function ClassesSkeleton() {
                     <div className="h-7 w-36 bg-muted animate-pulse rounded-full" />
                     <div className="h-12 w-56 bg-muted animate-pulse rounded-lg" />
                 </div>
-                <div className="flex gap-8 overflow-hidden">
+                <div className="flex gap-4 sm:gap-6 md:gap-8 overflow-hidden">
                     {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="h-80 w-80 sm:w-96 bg-muted animate-pulse rounded-2xl shrink-0" />
+                        <div key={i} className="h-64 sm:h-80 w-[250px] sm:w-[320px] md:w-[380px] bg-muted animate-pulse rounded-2xl shrink-0" />
                     ))}
                 </div>
             </div>
@@ -52,33 +52,33 @@ export function ClassesSection() {
                             href={item.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="group flex flex-col bg-background/50 rounded-2xl border border-border/60 overflow-hidden hover:border-[#FF0000]/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-[300px] sm:w-[350px] md:w-[380px] h-full"
+                            className="group flex flex-col bg-background/50 rounded-2xl border border-border/60 overflow-hidden hover:border-[#FF0000]/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-[250px] sm:w-[320px] md:w-[380px] h-full"
                         >
                             <div className="relative aspect-video w-full overflow-hidden bg-muted">
                                 <Image
                                     src={`https://img.youtube.com/vi/${item.videoId}/maxresdefault.jpg`}
                                     alt={item.title}
                                     fill
-                                    sizes="(max-width: 640px) 300px, (max-width: 768px) 350px, 380px"
+                                    sizes="(max-width: 640px) 250px, (max-width: 768px) 320px, 380px"
                                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                                 />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <div className="w-14 h-14 rounded-full bg-[#FF0000] flex items-center justify-center text-white shadow-lg">
-                                        <PlayCircle className="w-7 h-7" />
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-[#FF0000] flex items-center justify-center text-white shadow-lg">
+                                        <PlayCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                                     </div>
                                 </div>
                             </div>
-                            <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                            <div className="p-3.5 sm:p-5 md:p-6 flex-1 flex flex-col justify-between space-y-2.5 sm:space-y-4">
                                 <div>
-                                    <h3 className="font-bold text-foreground font-lora text-lg sm:text-xl leading-tight group-hover:text-[#FF0000] transition-colors line-clamp-2">
+                                    <h3 className="font-bold text-foreground font-lora text-sm sm:text-base md:text-xl leading-snug group-hover:text-[#FF0000] transition-colors line-clamp-2">
                                         {item.title}
                                     </h3>
-                                    <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
+                                    <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2 line-clamp-2 sm:line-clamp-3">
                                         {item.description}
                                     </p>
                                 </div>
-                                <div className="flex items-center text-sm font-medium text-[#FF0000]">
-                                    <Youtube className="w-4 h-4 mr-2" />
+                                <div className="flex items-center text-xs sm:text-sm font-medium text-[#FF0000]">
+                                    <Youtube className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                                     Watch on YouTube
                                 </div>
                             </div>

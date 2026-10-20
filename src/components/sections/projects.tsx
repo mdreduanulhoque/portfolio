@@ -15,9 +15,9 @@ function ProjectsSkeleton() {
                     <div className="h-7 w-24 bg-muted animate-pulse rounded-full" />
                     <div className="h-12 w-56 bg-muted animate-pulse rounded-lg" />
                 </div>
-                <div className="flex gap-8 overflow-hidden">
+                <div className="flex gap-4 sm:gap-6 md:gap-8 overflow-hidden">
                     {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="h-96 w-80 sm:w-96 bg-muted animate-pulse rounded-2xl shrink-0" />
+                        <div key={i} className="h-[340px] sm:h-96 w-[265px] sm:w-[360px] md:w-[410px] bg-muted animate-pulse rounded-2xl shrink-0" />
                     ))}
                 </div>
             </div>
@@ -50,25 +50,25 @@ export function ProjectsSection() {
                     durationSeconds={40}
                     renderItem={(project) => (
                         <div
-                            className="group relative flex flex-col bg-background/50 backdrop-blur-md border border-border/60 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-primary/5 w-[320px] sm:w-[380px] md:w-[410px] h-full"
+                            className="group relative flex flex-col bg-background/50 backdrop-blur-md border border-border/60 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-primary/5 w-[265px] sm:w-[360px] md:w-[410px] h-full"
                         >
                             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
 
-                            <div className="p-7 flex flex-col flex-1 relative z-10">
-                                <div className="flex justify-between items-start mb-5">
-                                    <div className="p-3 bg-secondary/50 rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                                        <Code className="w-5 h-5 text-foreground group-hover:text-white" />
+                            <div className="p-4 sm:p-6 md:p-7 flex flex-col flex-1 relative z-10">
+                                <div className="flex justify-between items-start mb-3.5 sm:mb-5">
+                                    <div className="p-2 sm:p-2.5 md:p-3 bg-secondary/50 rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                                        <Code className="w-4 h-4 sm:w-5 sm:h-5 text-foreground group-hover:text-white" />
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-1.5 sm:gap-2">
                                         {project.githubLink && (
                                             <a
                                                 href={project.githubLink}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="p-2 rounded-full bg-secondary/50 hover:bg-foreground hover:text-background transition-colors cursor-pointer"
+                                                className="p-1.5 sm:p-2 rounded-full bg-secondary/50 hover:bg-foreground hover:text-background transition-colors cursor-pointer"
                                                 aria-label="Source Code"
                                             >
-                                                <Github className="w-4 h-4" />
+                                                <Github className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                             </a>
                                         )}
                                         {project.liveLink && (
@@ -76,39 +76,39 @@ export function ProjectsSection() {
                                                 href={project.liveLink}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="p-2 rounded-full bg-secondary/50 hover:bg-foreground hover:text-background transition-colors cursor-pointer"
+                                                className="p-1.5 sm:p-2 rounded-full bg-secondary/50 hover:bg-foreground hover:text-background transition-colors cursor-pointer"
                                                 aria-label="Live Demo"
                                             >
-                                                <ExternalLink className="w-4 h-4" />
+                                                <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                             </a>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="mb-5">
-                                    <h3 className="text-2xl font-bold font-lora mb-2.5 group-hover:text-primary transition-colors">
+                                <div className="mb-3.5 sm:mb-5">
+                                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold font-lora mb-1.5 sm:mb-2.5 group-hover:text-primary transition-colors">
                                         {project.title}
                                     </h3>
-                                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-3">
                                         {project.description}
                                     </p>
                                 </div>
 
-                                <div className="space-y-2.5 flex-1 mb-6">
+                                <div className="space-y-1.5 sm:space-y-2.5 flex-1 mb-4 sm:mb-6">
                                     {project.features.map((feature, fIndex) => (
-                                        <div key={fIndex} className="flex items-start gap-2.5">
-                                            <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary/70 shrink-0" />
+                                        <div key={fIndex} className="flex items-start gap-2 sm:gap-2.5">
+                                            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-primary/70 shrink-0" />
                                             <span className="text-xs sm:text-sm text-foreground/80 line-clamp-1">{feature}</span>
                                         </div>
                                     ))}
                                 </div>
 
-                                <div className="mt-auto pt-5 border-t border-border/40">
-                                    <div className="flex flex-wrap gap-1.5 mb-4">
+                                <div className="mt-auto pt-3.5 sm:pt-4 md:pt-5 border-t border-border/40">
+                                    <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3 sm:mb-4">
                                         {project.techStack.map((tech, techIndex) => (
                                             <span
                                                 key={techIndex}
-                                                className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full bg-primary/10 text-primary font-mono group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                                                className="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-primary/10 text-primary font-mono group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                                             >
                                                 {tech}
                                             </span>
@@ -120,9 +120,9 @@ export function ProjectsSection() {
                                             href={project.liveLink}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="inline-flex items-center text-sm font-semibold text-foreground group-hover:text-primary transition-colors cursor-pointer"
+                                            className="inline-flex items-center text-xs sm:text-sm font-semibold text-foreground group-hover:text-primary transition-colors cursor-pointer"
                                         >
-                                            View Project <ChevronRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+                                            View Project <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
                                         </a>
                                     )}
                                 </div>
