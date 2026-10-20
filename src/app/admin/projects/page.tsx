@@ -2,11 +2,12 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { db } from "@/lib/firebase";
 import { doc, addDoc, updateDoc, deleteDoc, collection } from "firebase/firestore";
 import type { Project } from "@/lib/data";
-import { swapCollectionOrder } from "@/lib/data";
+import { swapCollectionOrder, normalizeImageUrl, getProjectImageUrl } from "@/lib/data";
 import toast from "react-hot-toast";
 import {
   Save,
@@ -15,10 +16,12 @@ import {
   Trash,
   ArrowUp,
   ArrowDown,
-  Sparkles,
   ExternalLink,
   Github,
   Code2,
+  Image as ImageIcon,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 
 export default function AdminProjectsPage() {
@@ -28,6 +31,7 @@ export default function AdminProjectsPage() {
   // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [techStack, setTechStack] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
   const [liveLink, setLiveLink] = useState("");
@@ -41,6 +45,7 @@ export default function AdminProjectsPage() {
   const resetForm = () => {
     setTitle("");
     setDescription("");
+    setImageUrl("");
     setTechStack([]);
     setFeatures([]);
     setLiveLink("");
@@ -52,24 +57,27 @@ export default function AdminProjectsPage() {
     setEditingId(project.id);
     setTitle(project.title);
     setDescription(project.description);
+    setImageUrl(project.imageUrl || "");
     setTechStack(project.techStack || []);
     setFeatures(project.features || []);
     setLiveLink(project.liveLink || "");
     setGithubLink(project.githubLink || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormLoading(true);
 
-    const data = {
-      title,
-      description,
+    const data: Record<string, unknown> = {
+      title: title.trim(),
+      description: description.trim(),
       techStack,
       features,
-      liveLink,
-      githubLink,
-      order: editingId ? (projects.find(p => p.id === editingId)?.order ?? 0) : projects.length,
+      liveLink: liveLink.trim(),
+      githubLink: githubLink.trim(),
+      imageUrl: imageUrl.trim(),
+      order: editingId ? (projects.find((p) => p.id === editingId)?.order ?? 0) : projects.length,
     };
 
     try {
@@ -156,7 +164,7 @@ export default function AdminProjectsPage() {
           </div>
           <h1 className="text-3xl font-bold font-lora text-foreground">Projects Manager</h1>
           <p className="text-muted-foreground font-mono text-xs mt-1">
-            Configure selected works, software projects, tech stacks, and live showcases.
+            Configure selected works, software projects, tech stacks, screenshots, and live showcases.
           </p>
         </div>
 
@@ -172,10 +180,20 @@ export default function AdminProjectsPage() {
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Form */}
-        <form onSubmit={handleSubmit} className="lg:col-span-6 space-y-4 p-6 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
-          <h2 className="text-lg font-bold font-lora text-foreground mb-4">
-            {editingId ? "Edit Project" : "Create Project"}
-          </h2>
+        <form
+          onSubmit={handleSubmit}
+          className="lg:col-span-6 space-y-4 p-6 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold font-lora text-foreground">
+              {editingId ? "Edit Project" : "Create Project"}
+            </h2>
+            {editingId && (
+              <span className="text-[10px] font-mono uppercase bg-primary/10 text-primary px-2 py-0.5 rounded">
+                Editing
+              </span>
+            )}
+          </div>
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Project Title</label>
@@ -184,9 +202,60 @@ export default function AdminProjectsPage() {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary"
+              placeholder="e.g. Simon Game"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
             />
           </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-muted-foreground uppercase">
+                Project Screenshot / Image URL
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const autoImg = getProjectImageUrl({ title, githubLink, liveLink });
+                  if (autoImg) {
+                    setImageUrl(autoImg);
+                    toast.success("Screenshot preview auto-detected!");
+                  } else {
+                    toast.error("Could not auto-detect preview. Please enter a valid URL or GitHub repo.");
+                  }
+                }}
+                className="px-2 py-0.5 rounded bg-secondary hover:bg-secondary/80 text-[10px] font-mono flex items-center gap-1 text-primary cursor-pointer"
+              >
+                <Sparkles className="w-3 h-3" /> Auto-Detect Preview
+              </button>
+            </div>
+            <input
+              type="text"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="e.g. /projects/campus-eats.png or https://images.unsplash.com/..."
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Displayed in the project card thumbnail. Supports local screenshots (/projects/...), GitHub OpenGraph, or direct image links.
+            </p>
+          </div>
+
+          {/* Live Screenshot Preview */}
+          {imageUrl && (
+            <div className="space-y-1 pt-1">
+              <label className="text-[11px] font-bold text-muted-foreground uppercase">
+                Detected Screenshot Preview
+              </label>
+              <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black/40 border border-border/60">
+                <Image
+                  src={normalizeImageUrl(imageUrl)}
+                  alt="Detected project preview"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Short Description</label>
@@ -195,80 +264,119 @@ export default function AdminProjectsPage() {
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder="Overview of the project, problem solved, and technical architecture..."
               className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary font-sans leading-relaxed text-xs"
             />
           </div>
 
-          {/* Dynamic Tech Stack array */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" /> Tech Stack Tags
-            </label>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {techStack.map((tech) => (
-                <span key={tech} className="flex items-center gap-1.5 px-2.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full text-[10px] uppercase font-bold tracking-wider">
-                  {tech}
-                  <button type="button" onClick={() => removeTech(tech)} className="hover:text-red-500 cursor-pointer">✕</button>
-                </span>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="e.g. React"
-                value={newTech}
-                onChange={(e) => setNewTech(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTech())}
-                className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
-              />
-              <button type="button" onClick={addTech} className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs cursor-pointer">Add</button>
-            </div>
-          </div>
-
-          {/* Dynamic Features array */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" /> Key Features
-            </label>
-            <div className="space-y-1.5 mb-2">
-              {features.map((feat, i) => (
-                <div key={i} className="flex items-center justify-between p-2 bg-muted/30 border border-border/40 rounded-lg text-xs font-sans">
-                  <span>{feat}</span>
-                  <button type="button" onClick={() => removeFeature(feat)} className="text-muted-foreground hover:text-red-500 cursor-pointer">✕</button>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="e.g. Sound effects for each color"
-                value={newFeature}
-                onChange={(e) => setNewFeature(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addFeature())}
-                className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
-              />
-              <button type="button" onClick={addFeature} className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs cursor-pointer">Add</button>
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Live Link</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">Live Demo Link</label>
               <input
                 type="url"
                 value={liveLink}
                 onChange={(e) => setLiveLink(e.target.value)}
+                placeholder="https://..."
                 className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">GitHub Link</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">GitHub Repo Link</label>
               <input
                 type="url"
                 value={githubLink}
                 onChange={(e) => setGithubLink(e.target.value)}
+                placeholder="https://github.com/..."
                 className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
               />
+            </div>
+          </div>
+
+          {/* Tech Stack Array Field */}
+          <div className="space-y-2 pt-2 border-t border-border/40">
+            <label className="text-xs font-bold text-muted-foreground uppercase">Tech Stack</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newTech}
+                onChange={(e) => setNewTech(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTech();
+                  }
+                }}
+                placeholder="Add tech (e.g. Next.js, TypeScript)..."
+                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
+              />
+              <button
+                type="button"
+                onClick={addTech}
+                className="px-3 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 font-bold text-xs"
+              >
+                Add
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {techStack.map((tech) => (
+                <span
+                  key={tech}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary border border-primary/20 text-xs"
+                >
+                  {tech}
+                  <button
+                    type="button"
+                    onClick={() => removeTech(tech)}
+                    className="hover:text-red-500 cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Key Features Array Field */}
+          <div className="space-y-2 pt-2 border-t border-border/40">
+            <label className="text-xs font-bold text-muted-foreground uppercase">Key Features</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addFeature();
+                  }
+                }}
+                placeholder="Add feature highlight..."
+                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
+              />
+              <button
+                type="button"
+                onClick={addFeature}
+                className="px-3 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 font-bold text-xs"
+              >
+                Add
+              </button>
+            </div>
+            <div className="space-y-1 pt-1">
+              {features.map((feat, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between gap-2 p-2 rounded-lg bg-secondary/30 border border-border/40 text-xs"
+                >
+                  <span className="line-clamp-1">{feat}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeFeature(feat)}
+                    className="text-muted-foreground hover:text-red-500 shrink-0 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -276,9 +384,9 @@ export default function AdminProjectsPage() {
             <button
               type="submit"
               disabled={formLoading}
-              className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary/95 text-white font-bold text-xs tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-bold text-xs tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <Save className="w-4 h-4" />
+              {formLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {editingId ? "Update Project" : "Save Project"}
             </button>
             {editingId && (
@@ -297,51 +405,78 @@ export default function AdminProjectsPage() {
         {/* Right Column: Listing */}
         <div className="lg:col-span-6 space-y-4">
           <div className="rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden">
-            <div className="p-4 border-b border-border/40 font-lora font-bold text-foreground">
-              Project Showcase
+            <div className="p-4 border-b border-border/40 font-lora font-bold text-foreground flex items-center justify-between">
+              <span>Project Showcase ({projects.length})</span>
+              <span className="text-xs font-mono text-muted-foreground">Order: Top to Bottom</span>
             </div>
             <div className="divide-y divide-border/40">
               {projects.length === 0 ? (
                 <div className="p-6 text-center text-muted-foreground text-xs font-mono">
-                  No records stored yet. Using fallback values on home page.
+                  No records stored yet. Using fallback values on public site.
                 </div>
               ) : (
                 projects.map((proj, idx) => (
                   <div key={proj.id} className="p-4 flex items-start gap-4 justify-between group">
-                    <div className="space-y-1.5 flex-1">
-                      <h4 className="font-bold text-foreground">{proj.title}</h4>
-                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{proj.description}</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {proj.techStack?.map((tech) => (
-                          <span key={tech} className="px-2 py-0.5 bg-muted text-foreground border border-border rounded text-[9px] uppercase font-bold tracking-wider">
-                            {tech}
-                          </span>
-                        ))}
+                    <div className="flex gap-3 items-start flex-1 min-w-0">
+                      {/* Screenshot Thumbnail */}
+                      <div className="relative w-20 aspect-video rounded-lg overflow-hidden bg-muted shrink-0 border border-border/50">
+                        {(() => {
+                          const thumb = getProjectImageUrl(proj);
+                          return thumb ? (
+                            <Image
+                              src={thumb}
+                              alt={proj.title}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                              <ImageIcon className="w-4 h-4 opacity-50" />
+                            </div>
+                          );
+                        })()}
                       </div>
-                      {(proj.githubLink || proj.liveLink) && (
-                        <div className="flex items-center gap-3 pt-1 text-[11px] font-mono text-muted-foreground">
-                          {proj.githubLink && (
-                            <a
-                              href={proj.githubLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
+
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <h4 className="font-bold text-foreground text-sm line-clamp-1">{proj.title}</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                          {proj.description}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {proj.techStack?.map((tech) => (
+                            <span
+                              key={tech}
+                              className="px-2 py-0.5 bg-muted text-foreground border border-border rounded text-[9px] uppercase font-bold tracking-wider"
                             >
-                              <Github className="w-3 h-3" /> GitHub
-                            </a>
-                          )}
-                          {proj.liveLink && (
-                            <a
-                              href={proj.liveLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <ExternalLink className="w-3 h-3" /> Live Demo
-                            </a>
-                          )}
+                              {tech}
+                            </span>
+                          ))}
                         </div>
-                      )}
+                        {(proj.githubLink || proj.liveLink) && (
+                          <div className="flex items-center gap-3 pt-1 text-[11px] font-mono text-muted-foreground">
+                            {proj.githubLink && (
+                              <a
+                                href={proj.githubLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <Github className="w-3 h-3" /> GitHub
+                              </a>
+                            )}
+                            {proj.liveLink && (
+                              <a
+                                href={proj.liveLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <ExternalLink className="w-3 h-3" /> Live Demo
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">

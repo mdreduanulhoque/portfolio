@@ -159,6 +159,48 @@ export function getYouTubeWatchUrl(urlOrId: string | undefined | null): string {
   return `https://www.youtube.com/watch?v=${id}`;
 }
 
+/**
+ * Extracts GitHub repository owner and repo name from any GitHub URL.
+ */
+export function extractGitHubRepo(url: string | undefined | null): { owner: string; repo: string } | null {
+  if (!url) return null;
+  const match = url.trim().match(/github\.com\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_.-]+)/i);
+  if (match) {
+    const repoClean = match[2].replace(/\.git$/, "");
+    return { owner: match[1], repo: repoClean };
+  }
+  return null;
+}
+
+/**
+ * Resolves the best available preview image for a project with smart multi-tier fallback:
+ * 1. Explicitly stored imageUrl (normalized for Google Drive, etc.)
+ * 2. Static local screenshot matched by title or ID
+ * 3. Automated GitHub OpenGraph repository preview card
+ */
+export function getProjectImageUrl(project: Partial<Project> | null | undefined): string {
+  if (!project) return "";
+  if (project.imageUrl && project.imageUrl.trim()) {
+    return normalizeImageUrl(project.imageUrl);
+  }
+
+  // Automatic match by project title or ID to local high-res screenshots
+  const title = (project.title || "").toLowerCase();
+  const id = (project.id || "").toLowerCase();
+  if (title.includes("simon") || id === "proj1") return "/projects/simon-game.png";
+  if (title.includes("chess") || id.includes("chess") || id === "xiumrrydcbnnn6zq0mu9") return "/projects/vibe-chess.png";
+  if (title.includes("campus") || title.includes("eat") || id === "dfkm4riksrn0pdlbpnqm") return "/projects/campus-eats.png";
+  if (title.includes("array") || title.includes("memory") || id === "proj3") return "/projects/array-memory-mapping.png";
+
+  // Automatic fallback to GitHub OpenGraph preview
+  const repo = extractGitHubRepo(project.githubLink);
+  if (repo) {
+    return `https://opengraph.githubassets.com/1/${repo.owner}/${repo.repo}`;
+  }
+
+  return "";
+}
+
 export async function swapCollectionOrder<T extends { id: string; order: number }>(
   collectionName: string,
   items: T[],
@@ -233,6 +275,8 @@ export interface Project {
   liveLink: string;
   githubLink: string;
   order: number;
+  imageUrl?: string;
+  category?: string;
 }
 
 export interface Skill {
@@ -459,9 +503,50 @@ export const fallbackAchievements: Achievement[] = [
 ];
 
 export const fallbackProjects: Project[] = [
-  { id: "proj1", title: "Simon Game", description: "A classic colorful memory game. Features interactive buttons, sound effects, full responsiveness, and game over animations.", techStack: ["HTML5", "CSS3", "JS (ES6)", "jQuery"], liveLink: "https://mdreduanulhoque.github.io/SimonGame/", githubLink: "https://github.com/mdreduanulhoque/SimonGame", features: ["Colorful interactive buttons", "Sound effects for each color", "Game Over animation"], order: 0 },
-  { id: "proj2", title: "Vibe Chess", description: "A relaxing, timer-based chess variant. Games end when the 5-minute timer expires, winner determined by territorial control.", techStack: ["Vanilla JS", "HTML5", "CSS3"], liveLink: "https://mdreduanulhoque.github.io/vibe-chess/", githubLink: "https://github.com/mdreduanulhoque/vibe-chess", features: ["Territorial Victory System", "Relaxing Design & Animations", "Smart 5-minute Timer display"], order: 1 },
-  { id: "proj3", title: "Array Memory Visualizer", description: "A visualization tool for Array Memory Mapping. Shows grid generation, step-by-step calculations, and major mapping.", techStack: ["JavaScript", "HTML", "CSS"], liveLink: "https://mdreduanulhoque.github.io/Array-Memory-Mapping/", githubLink: "https://github.com/mdreduanulhoque/Array-Memory-Mapping", features: ["Dynamic grid generation", "Row/Column Major mapping", "Formula calculation steps"], order: 2 },
+  {
+    id: "proj1",
+    title: "Simon Game",
+    description: "A classic colorful memory game. Features interactive buttons, sound effects, full responsiveness, and game over animations.",
+    techStack: ["HTML5", "CSS3", "JS (ES6)", "jQuery"],
+    liveLink: "https://mdreduanulhoque.github.io/SimonGame/",
+    githubLink: "https://github.com/mdreduanulhoque/SimonGame",
+    features: ["Colorful interactive buttons", "Sound effects for each color", "Game Over animation"],
+    imageUrl: "/projects/simon-game.png",
+    order: 0,
+  },
+  {
+    id: "proj2",
+    title: "Vibe Chess",
+    description: "A relaxing, timer-based chess variant. Games end when the 5-minute timer expires, winner determined by territorial control.",
+    techStack: ["Vanilla JS", "HTML5", "CSS3"],
+    liveLink: "https://mdreduanulhoque.github.io/vibe-chess/",
+    githubLink: "https://github.com/mdreduanulhoque/vibe-chess",
+    features: ["Territorial Victory System", "Relaxing Design & Animations", "Smart 5-minute Timer display"],
+    imageUrl: "/projects/vibe-chess.png",
+    order: 1,
+  },
+  {
+    id: "proj3",
+    title: "Campus Eats",
+    description: "A platform where students order food and select a pickup time, so that they do not need to stuck in queue for ling time.",
+    techStack: ["HTML", "CSS", "React.js", "Node.js", "Express.JS", "MySQL"],
+    liveLink: "",
+    githubLink: "https://github.com/mdreduanulhoque/campus_eats",
+    features: ["Select available pickup time", "Compare items across multiple kitchen", "Daily budget guardrail"],
+    imageUrl: "/projects/campus-eats.png",
+    order: 2,
+  },
+  {
+    id: "proj4",
+    title: "Array Memory Visualizer",
+    description: "A visualization tool for Array Memory Mapping. Shows grid generation, step-by-step calculations, and major mapping.",
+    techStack: ["JavaScript", "HTML", "CSS"],
+    liveLink: "https://mdreduanulhoque.github.io/Array-Memory-Mapping/",
+    githubLink: "https://github.com/mdreduanulhoque/Array-Memory-Mapping",
+    features: ["Dynamic grid generation", "Row/Column Major mapping", "Formula calculation steps"],
+    imageUrl: "/projects/array-memory-mapping.png",
+    order: 3,
+  },
 ];
 
 export const fallbackSkills: Skill[] = [
