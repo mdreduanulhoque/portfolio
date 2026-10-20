@@ -1,13 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { db } from "@/lib/firebase";
 import { doc, addDoc, updateDoc, deleteDoc, collection } from "firebase/firestore";
 import type { Project } from "@/lib/data";
 import { swapCollectionOrder } from "@/lib/data";
 import toast from "react-hot-toast";
-import { Save, X, Edit2, Trash, ArrowUp, ArrowDown, Sparkles } from "lucide-react";
+import {
+  Save,
+  X,
+  Edit2,
+  Trash,
+  ArrowUp,
+  ArrowDown,
+  Sparkles,
+  ExternalLink,
+  Github,
+  Code2,
+} from "lucide-react";
 
 export default function AdminProjectsPage() {
   const { data: projects, loading } = useFirestoreCollection<Project>("projects");
@@ -135,9 +147,27 @@ export default function AdminProjectsPage() {
 
   return (
     <div className="space-y-8 font-mono text-sm">
-      <div>
-        <h1 className="text-3xl font-bold font-lora text-foreground">Projects Manager</h1>
-        <p className="text-muted-foreground font-mono text-xs mt-1">Configure selected works and showcases.</p>
+      {/* Header with Public Page Link */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-6">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary font-mono mb-2">
+            <Code2 className="w-3.5 h-3.5" />
+            ~/admin/projects
+          </div>
+          <h1 className="text-3xl font-bold font-lora text-foreground">Projects Manager</h1>
+          <p className="text-muted-foreground font-mono text-xs mt-1">
+            Configure selected works, software projects, tech stacks, and live showcases.
+          </p>
+        </div>
+
+        <Link
+          href="/projects"
+          target="_blank"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border/70 bg-card hover:bg-accent text-foreground text-xs font-mono transition-colors shrink-0 cursor-pointer"
+        >
+          <span>View Public Page</span>
+          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+        </Link>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
@@ -288,6 +318,30 @@ export default function AdminProjectsPage() {
                           </span>
                         ))}
                       </div>
+                      {(proj.githubLink || proj.liveLink) && (
+                        <div className="flex items-center gap-3 pt-1 text-[11px] font-mono text-muted-foreground">
+                          {proj.githubLink && (
+                            <a
+                              href={proj.githubLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <Github className="w-3 h-3" /> GitHub
+                            </a>
+                          )}
+                          {proj.liveLink && (
+                            <a
+                              href={proj.liveLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <ExternalLink className="w-3 h-3" /> Live Demo
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">

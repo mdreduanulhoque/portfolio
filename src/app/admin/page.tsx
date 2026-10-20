@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import { db } from "@/lib/firebase";
-import { doc, setDoc, writeBatch, collection } from "firebase/firestore";
+import { doc, setDoc, writeBatch } from "firebase/firestore";
 import type { Profile, Education, Experience, Achievement, Project, Skill, ClassItem, Certificate, SocialLinks, BlogPost } from "@/lib/data";
 import { fallbackBlogPosts, fallbackProfile, fallbackSocialLinks, fallbackEducation, fallbackExperience, fallbackAchievements, fallbackProjects, fallbackSkills, fallbackClasses, fallbackCertificates } from "@/lib/data";
 import {
@@ -21,6 +21,7 @@ import {
   Loader2,
   Newspaper,
   Share2,
+  Video,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -48,7 +49,7 @@ export default function AdminDashboardOverview() {
     { name: "Achievements", count: achievements.length, href: "/admin/achievements", icon: Trophy, desc: "Manage awards, contest runner-ups, and emojis." },
     { name: "Projects", count: projects.length, href: "/admin/projects", icon: Code2, desc: "Manage coding projects, features, tech stack, and URLs." },
     { name: "Skills", count: skills.length, href: "/admin/skills", icon: BookOpen, desc: "Manage skills list, file size style, and categories." },
-    { name: "Classes", count: classes.length, href: "/admin/classes", icon: BookOpen, desc: "Manage YouTube classes, descriptions, and video IDs." },
+    { name: "Classes", count: classes.length, href: "/admin/classes", icon: Video, desc: "Manage YouTube classes, descriptions, and video IDs." },
     { name: "Certificates", count: certificates.length, href: "/admin/certificates", icon: Award, desc: "Manage Google Drive PDF certificates, issuers, dates, and awards." },
     { name: "Social Links", count: socialLinks ? 1 : 0, href: "/admin/social-links", icon: Share2, desc: "Manage social profiles, email, and resume URLs." },
   ];

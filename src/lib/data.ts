@@ -107,6 +107,58 @@ export function getDriveViewUrl(urlOrId: string | undefined | null): string {
   return `https://drive.google.com/file/d/${id}/view?usp=sharing`;
 }
 
+/**
+ * Extracts a YouTube Video ID from any standard URL, short link, embed link, or raw 11-char ID.
+ */
+export function extractYouTubeVideoId(urlOrId: string | undefined | null): string {
+  if (!urlOrId) return "";
+  const trimmed = urlOrId.trim();
+
+  // Pattern for youtu.be/<id>, youtube.com/watch?v=<id>, youtube.com/embed/<id>, youtube.com/shorts/<id>, etc.
+  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([a-zA-Z0-9_-]{11})/i;
+  const match = trimmed.match(regExp);
+  if (match && match[1]) return match[1];
+
+  // If already an 11-character YouTube video ID
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return "";
+}
+
+/**
+ * Generates a YouTube thumbnail image URL (defaulting to high quality with fallback).
+ */
+export function getYouTubeThumbnailUrl(
+  urlOrId: string | undefined | null,
+  quality: "hq" | "max" = "hq"
+): string {
+  const id = extractYouTubeVideoId(urlOrId);
+  if (!id) return "";
+  return quality === "max"
+    ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg`
+    : `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+}
+
+/**
+ * Generates an embeddable YouTube player URL for iframes.
+ */
+export function getYouTubeEmbedUrl(urlOrId: string | undefined | null): string {
+  const id = extractYouTubeVideoId(urlOrId);
+  if (!id) return "";
+  return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+}
+
+/**
+ * Generates a direct YouTube watch link.
+ */
+export function getYouTubeWatchUrl(urlOrId: string | undefined | null): string {
+  const id = extractYouTubeVideoId(urlOrId);
+  if (!id) return urlOrId || "";
+  return `https://www.youtube.com/watch?v=${id}`;
+}
+
 export async function swapCollectionOrder<T extends { id: string; order: number }>(
   collectionName: string,
   items: T[],

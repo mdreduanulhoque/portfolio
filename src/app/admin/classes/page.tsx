@@ -1,13 +1,36 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { db } from "@/lib/firebase";
 import { doc, addDoc, updateDoc, deleteDoc, collection } from "firebase/firestore";
 import type { ClassItem } from "@/lib/data";
-import { swapCollectionOrder } from "@/lib/data";
+import {
+  swapCollectionOrder,
+  extractYouTubeVideoId,
+  getYouTubeThumbnailUrl,
+  getYouTubeEmbedUrl,
+  getYouTubeWatchUrl,
+} from "@/lib/data";
 import toast from "react-hot-toast";
-import { Save, X, Edit2, Trash, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Save,
+  X,
+  Edit2,
+  Trash,
+  ArrowUp,
+  ArrowDown,
+  Youtube,
+  PlayCircle,
+  Eye,
+  ExternalLink,
+  Video,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 
 export default function AdminClassesPage() {
   const { data: classes, loading } = useFirestoreCollection<ClassItem>("classes");
@@ -20,6 +43,14 @@ export default function AdminClassesPage() {
   const [url, setUrl] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
+  // Preview Modal State
+  const [previewVideo, setPreviewVideo] = useState<{ title: string; videoId: string } | null>(null);
+  const [modalLoading, setModalLoading] = useState(true);
+
+  // Real-time parsed YouTube details
+  const currentExtractedId = extractYouTubeVideoId(videoId) || extractYouTubeVideoId(url);
+  const liveThumbnailUrl = currentExtractedId ? getYouTubeThumbnailUrl(currentExtractedId, "hq") : "";
+
   const resetForm = () => {
     setTitle("");
     setVideoId("");
@@ -31,21 +62,37 @@ export default function AdminClassesPage() {
   const handleEdit = (cl: ClassItem) => {
     setEditingId(cl.id);
     setTitle(cl.title);
-    setVideoId(cl.videoId);
+    setVideoId(cl.videoId || extractYouTubeVideoId(cl.url));
     setDescription(cl.description);
-    setUrl(cl.url);
+    setUrl(cl.url || (cl.videoId ? getYouTubeWatchUrl(cl.videoId) : ""));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleUrlChange = (newUrl: string) => {
+    setUrl(newUrl);
+    const extracted = extractYouTubeVideoId(newUrl);
+    if (extracted && !videoId) {
+      setVideoId(extracted);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const finalVideoId = extractYouTubeVideoId(videoId) || extractYouTubeVideoId(url);
+    if (!finalVideoId) {
+      toast.error("Please enter a valid YouTube Video ID or Video URL.");
+      return;
+    }
+
     setFormLoading(true);
 
     const data = {
-      title,
-      videoId,
-      description,
-      url,
-      order: editingId ? (classes.find(c => c.id === editingId)?.order ?? 0) : classes.length,
+      title: title.trim(),
+      videoId: finalVideoId,
+      description: description.trim(),
+      url: url.trim() || getYouTubeWatchUrl(finalVideoId),
+      order: editingId ? (classes.find((c) => c.id === editingId)?.order ?? 0) : classes.length,
     };
 
     try {
@@ -60,7 +107,11 @@ export default function AdminClassesPage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast.error(`Error: ${msg}`);
+      if (msg.toLowerCase().includes("permission")) {
+        toast.error("Permission denied. Verify you are logged into your admin account.");
+      } else {
+        toast.error(`Error: ${msg}`);
+      }
     } finally {
       setFormLoading(false);
     }
@@ -99,17 +150,45 @@ export default function AdminClassesPage() {
 
   return (
     <div className="space-y-8 font-mono text-sm">
-      <div>
-        <h1 className="text-3xl font-bold font-lora text-foreground">Classes Manager</h1>
-        <p className="text-muted-foreground font-mono text-xs mt-1">Configure online classes and YouTube tutorials.</p>
+      {/* Header with Public Page Link */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-6">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary font-mono mb-2">
+            <Video className="w-3.5 h-3.5" />
+            ~/admin/classes
+          </div>
+          <h1 className="text-3xl font-bold font-lora text-foreground">Classes Manager</h1>
+          <p className="text-muted-foreground font-mono text-xs mt-1">
+            Configure online classes, lecture recordings, and YouTube tutorials.
+          </p>
+        </div>
+
+        <Link
+          href="/classes"
+          target="_blank"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border/70 bg-card hover:bg-accent text-foreground text-xs font-mono transition-colors shrink-0 cursor-pointer"
+        >
+          <span>View Public Page</span>
+          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+        </Link>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Form */}
-        <form onSubmit={handleSubmit} className="lg:col-span-5 space-y-4 p-6 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm">
-          <h2 className="text-lg font-bold font-lora text-foreground mb-4">
-            {editingId ? "Edit Class" : "Create Class"}
-          </h2>
+        <form
+          onSubmit={handleSubmit}
+          className="lg:col-span-5 space-y-4 p-6 rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold font-lora text-foreground">
+              {editingId ? "Edit Class" : "Create Class"}
+            </h2>
+            {editingId && (
+              <span className="text-[10px] font-mono uppercase bg-primary/10 text-primary px-2 py-0.5 rounded">
+                Editing
+              </span>
+            )}
+          </div>
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Class Title</label>
@@ -118,31 +197,60 @@ export default function AdminClassesPage() {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary"
+              placeholder="e.g. Thread in Java || OOP"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">YouTube Video ID (e.g. uobWZ7FA6XM)</label>
-            <input
-              type="text"
-              required
-              value={videoId}
-              onChange={(e) => setVideoId(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Class URL (e.g. https://youtu.be/uobWZ7FA6XM)</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase">YouTube URL</label>
             <input
               type="url"
               required
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary"
+              onChange={(e) => handleUrlChange(e.target.value)}
+              placeholder="https://youtu.be/uobWZ7FA6XM"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
             />
+            <p className="text-[10px] text-muted-foreground">
+              Paste the full YouTube link; the video ID will be extracted automatically.
+            </p>
           </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-muted-foreground uppercase">YouTube Video ID</label>
+            <div className="relative">
+              <input
+                type="text"
+                required
+                value={videoId}
+                onChange={(e) => setVideoId(e.target.value)}
+                placeholder="uobWZ7FA6XM"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-xs"
+              />
+              {currentExtractedId && (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2" />
+              )}
+            </div>
+          </div>
+
+          {/* Live Thumbnail Preview */}
+          {liveThumbnailUrl && (
+            <div className="space-y-1 pt-1">
+              <label className="text-[11px] font-bold text-muted-foreground uppercase">Detected Thumbnail</label>
+              <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black/40 border border-border/60">
+                <Image
+                  src={liveThumbnailUrl}
+                  alt="Detected thumbnail"
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                  <PlayCircle className="w-8 h-8 text-white/90 drop-shadow-md" />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Description</label>
@@ -151,6 +259,7 @@ export default function AdminClassesPage() {
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder="Detailed lecture overview, topics covered, and key outcomes..."
               className="w-full px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary font-sans leading-relaxed text-xs"
             />
           </div>
@@ -159,9 +268,13 @@ export default function AdminClassesPage() {
             <button
               type="submit"
               disabled={formLoading}
-              className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary/95 text-white font-bold text-xs tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-bold text-xs tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <Save className="w-4 h-4" />
+              {formLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
               {editingId ? "Update Class" : "Save Class"}
             </button>
             {editingId && (
@@ -180,75 +293,177 @@ export default function AdminClassesPage() {
         {/* Right Column: Listing */}
         <div className="lg:col-span-7 space-y-4">
           <div className="rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden">
-            <div className="p-4 border-b border-border/40 font-lora font-bold text-foreground">
-              Teaching Archive
+            <div className="p-4 border-b border-border/40 font-lora font-bold text-foreground flex items-center justify-between">
+              <span>Teaching Archive ({classes.length})</span>
+              <span className="text-xs font-mono text-muted-foreground">Order: Top to Bottom</span>
             </div>
             <div className="divide-y divide-border/40">
               {classes.length === 0 ? (
-                <div className="p-6 text-center text-muted-foreground text-xs font-mono">
-                  No records stored yet. Using fallback values on home page.
+                <div className="p-8 text-center text-muted-foreground text-xs font-mono space-y-2">
+                  <AlertCircle className="w-6 h-6 mx-auto text-muted-foreground/60" />
+                  <p>No records stored yet in Firestore. The public site will display default fallback classes.</p>
                 </div>
               ) : (
-                classes.map((cl, idx) => (
-                  <div key={cl.id} className="p-4 flex items-start gap-4 justify-between group">
-                    <div className="flex gap-3 items-start flex-1">
-                      <div className="relative w-20 aspect-video rounded overflow-hidden bg-muted shrink-0 border border-border/50">
-                        <img
-                          src={`https://img.youtube.com/vi/${cl.videoId}/default.jpg`}
-                          alt={cl.title}
-                          className="object-cover w-full h-full"
-                        />
-                      </div>
-                      <div className="space-y-0.5">
-                        <h4 className="font-bold text-foreground line-clamp-1">{cl.title}</h4>
-                        <p className="text-[10px] text-primary font-mono">{cl.videoId}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed font-sans">{cl.description}</p>
-                      </div>
-                    </div>
+                classes.map((cl, idx) => {
+                  const finalId = cl.videoId || extractYouTubeVideoId(cl.url);
+                  const thumb = getYouTubeThumbnailUrl(finalId, "hq");
 
-                    <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        onClick={() => moveOrder(idx, "up")}
-                        disabled={idx === 0}
-                        aria-label={`Move ${cl.title} up`}
-                        className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
-                      >
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveOrder(idx, "down")}
-                        disabled={idx === classes.length - 1}
-                        aria-label={`Move ${cl.title} down`}
-                        className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
-                      >
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(cl)}
-                        aria-label={`Edit ${cl.title}`}
-                        className="p-1.5 rounded-lg border border-border bg-background text-primary hover:bg-primary/10 cursor-pointer"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(cl.id)}
-                        aria-label={`Delete ${cl.title}`}
-                        className="p-1.5 rounded-lg border border-border bg-background text-red-500 hover:bg-red-500/10 cursor-pointer"
-                      >
-                        <Trash className="w-3.5 h-3.5" />
-                      </button>
+                  return (
+                    <div key={cl.id} className="p-4 flex items-start gap-4 justify-between group">
+                      <div className="flex gap-3 items-start flex-1 min-w-0">
+                        {/* Thumbnail with quick preview click */}
+                        <div
+                          onClick={() => {
+                            setModalLoading(true);
+                            setPreviewVideo({ title: cl.title, videoId: finalId });
+                          }}
+                          className="relative w-24 aspect-video rounded-lg overflow-hidden bg-muted shrink-0 border border-border/50 cursor-pointer group/thumb"
+                          title="Click to preview video"
+                        >
+                          {thumb ? (
+                            <Image
+                              src={thumb}
+                              alt={cl.title}
+                              fill
+                              className="object-cover group-hover/thumb:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+                              <Youtube className="w-5 h-5" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
+                            <PlayCircle className="w-5 h-5 text-white" />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1 min-w-0">
+                          <h4 className="font-bold text-foreground text-sm line-clamp-1">{cl.title}</h4>
+                          <p className="text-[11px] text-primary font-mono flex items-center gap-1">
+                            <Youtube className="w-3 h-3 text-[#FF0000]" />
+                            ID: {finalId}
+                          </p>
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed font-sans">
+                            {cl.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModalLoading(true);
+                            setPreviewVideo({ title: cl.title, videoId: finalId });
+                          }}
+                          title="Preview Video"
+                          className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent text-foreground cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveOrder(idx, "up")}
+                          disabled={idx === 0}
+                          aria-label={`Move ${cl.title} up`}
+                          className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveOrder(idx, "down")}
+                          disabled={idx === classes.length - 1}
+                          aria-label={`Move ${cl.title} down`}
+                          className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(cl)}
+                          aria-label={`Edit ${cl.title}`}
+                          className="p-1.5 rounded-lg border border-border bg-background text-primary hover:bg-primary/10 cursor-pointer"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(cl.id)}
+                          aria-label={`Delete ${cl.title}`}
+                          className="p-1.5 rounded-lg border border-border bg-background text-red-500 hover:bg-red-500/10 cursor-pointer"
+                        >
+                          <Trash className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Video Preview Modal in Admin */}
+      {previewVideo && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setPreviewVideo(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl bg-background border border-border/70 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-border/50 flex items-center justify-between gap-4 bg-muted/20">
+              <h3 className="text-sm sm:text-base font-bold font-lora text-foreground truncate">
+                {previewVideo.title}
+              </h3>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={getYouTubeWatchUrl(previewVideo.videoId)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 text-xs font-mono rounded-lg border border-border bg-background hover:bg-accent text-foreground transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Youtube className="w-3.5 h-3.5 text-[#FF0000]" />
+                  <span>Open YouTube</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setPreviewVideo(null)}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="relative w-full aspect-video bg-black">
+              {modalLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground z-10">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <span className="text-xs font-mono">Loading YouTube preview...</span>
+                </div>
+              )}
+              <iframe
+                src={getYouTubeEmbedUrl(previewVideo.videoId)}
+                title={previewVideo.title}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                onLoad={() => setModalLoading(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

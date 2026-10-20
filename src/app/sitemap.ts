@@ -18,5 +18,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.8,
     },
+    {
+      url: `${baseUrl}/projects/`,
+      lastModified: new Date("2026-03-01"),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/classes/`,
+      lastModified: new Date("2026-03-01"),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/certificates/`,
+      lastModified: new Date("2026-03-01"),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
   ];
 }

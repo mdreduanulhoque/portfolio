@@ -21,6 +21,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  Video,
 } from "lucide-react";
 
 const navigationItems = [
@@ -32,7 +33,7 @@ const navigationItems = [
   { name: "Achievements", href: "/admin/achievements", icon: Trophy },
   { name: "Projects", href: "/admin/projects", icon: Code2 },
   { name: "Skills", href: "/admin/skills", icon: BookOpen },
-  { name: "Classes", href: "/admin/classes", icon: BookOpen },
+  { name: "Classes", href: "/admin/classes", icon: Video },
   { name: "Certificates", href: "/admin/certificates", icon: Award },
   { name: "Social Links", href: "/admin/social-links", icon: Share2 },
 ];

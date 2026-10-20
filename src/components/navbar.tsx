@@ -83,6 +83,8 @@ export function Navbar() {
 
     const isHome = pathname === "/";
     const isUpdates = pathname?.startsWith("/updates") ?? false;
+    const isProjects = pathname?.startsWith("/projects") ?? false;
+    const isClasses = pathname?.startsWith("/classes") ?? false;
     const isCertificates = pathname?.startsWith("/certificates") ?? false;
     const resumeUrl = profile?.resumeUrl || "/md_reduanul_hoque_resume.pdf";
 
@@ -100,8 +102,26 @@ export function Navbar() {
 
                     <nav className="flex items-center gap-4 sm:gap-6 text-sm font-medium">
                         <Link href={getSectionHref("#about")} className="transition-colors hover:text-primary">About</Link>
-                        <Link href={getSectionHref("#projects")} className="transition-colors hover:text-primary">Projects</Link>
-                        <Link href={getSectionHref("#classes")} className="transition-colors hover:text-primary">Classes</Link>
+                        <Link
+                            href={isHome ? "#projects" : "/projects"}
+                            className={`transition-colors relative py-1 hover:text-primary ${
+                                isProjects
+                                    ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+                                    : "text-muted-foreground hover:text-primary"
+                            }`}
+                        >
+                            Projects
+                        </Link>
+                        <Link
+                            href={isHome ? "#classes" : "/classes"}
+                            className={`transition-colors relative py-1 hover:text-primary ${
+                                isClasses
+                                    ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+                                    : "text-muted-foreground hover:text-primary"
+                            }`}
+                        >
+                            Classes
+                        </Link>
                         <Link
                             href={isHome ? "#certificates" : "/certificates"}
                             className={`transition-colors relative py-1 hover:text-primary ${
