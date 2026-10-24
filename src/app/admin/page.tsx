@@ -7,7 +7,7 @@ import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, writeBatch } from "firebase/firestore";
 import type { Profile, Education, Experience, Achievement, Project, Skill, ClassItem, Certificate, SocialLinks, BlogPost } from "@/lib/data";
-import { fallbackBlogPosts, fallbackProfile, fallbackSocialLinks, fallbackEducation, fallbackExperience, fallbackAchievements, fallbackProjects, fallbackSkills, fallbackClasses, fallbackCertificates } from "@/lib/data";
+import { fallbackBlogPosts, fallbackProfile, fallbackSocialLinks, fallbackEducation, fallbackExperience, fallbackAchievements, fallbackProjects, fallbackSkills, fallbackClasses, fallbackCertificates, resolveCertificates } from "@/lib/data";
 import {
   User,
   GraduationCap,
@@ -40,6 +40,7 @@ export default function AdminDashboardOverview() {
   const { data: updates } = useFirestoreCollection<BlogPost>("updates");
 
   const [seeding, setSeeding] = useState(false);
+  const [seedingCerts, setSeedingCerts] = useState(false);
 
   const sections = [
     { name: "Updates", count: updates.length, href: "/admin/updates", icon: Newspaper, desc: "Write, edit, and archive blog articles, thoughts, and updates." },
@@ -50,9 +51,38 @@ export default function AdminDashboardOverview() {
     { name: "Projects", count: projects.length, href: "/admin/projects", icon: Code2, desc: "Manage coding projects, features, tech stack, and URLs." },
     { name: "Skills", count: skills.length, href: "/admin/skills", icon: BookOpen, desc: "Manage skills list, file size style, and categories." },
     { name: "Classes", count: classes.length, href: "/admin/classes", icon: Video, desc: "Manage YouTube classes, descriptions, and video IDs." },
-    { name: "Certificates", count: certificates.length, href: "/admin/certificates", icon: Award, desc: "Manage Google Drive PDF certificates, issuers, dates, and awards." },
+    { name: "Certificates", count: resolveCertificates(certificates).length, href: "/admin/certificates", icon: Award, desc: "Manage Google Drive PDF certificates, issuers, dates, and awards." },
     { name: "Social Links", count: socialLinks ? 1 : 0, href: "/admin/social-links", icon: Share2, desc: "Manage social profiles, email, and resume URLs." },
   ];
+
+  const handleSeedCertificatesOnly = async () => {
+    if (!confirm("Seed default certificates to Firestore? This will add any missing original certificates to your database without modifying any other section.")) return;
+    setSeedingCerts(true);
+    try {
+      const batch = writeBatch(db);
+      const existingMaxOrder = certificates.length > 0
+        ? Math.max(...certificates.map((c) => c.order ?? 0))
+        : -1;
+
+      fallbackCertificates.forEach((item, index) => {
+        const alreadyExists = certificates.some(c => c.id === item.id || (c.fileId && c.fileId === item.fileId));
+        if (!alreadyExists) {
+          const docRef = doc(db, "certificates", item.id);
+          const data = { ...item, order: existingMaxOrder + 1 + index };
+          delete (data as { id?: string }).id;
+          batch.set(docRef, data);
+        }
+      });
+
+      await batch.commit();
+      toast.success("Certificates synced to Firestore successfully!");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Failed to sync certificates: ${msg}`);
+    } finally {
+      setSeedingCerts(false);
+    }
+  };
 
   const handleSeedDatabase = async () => {
     if (!confirm("Are you sure you want to seed the database? This will copy all original portfolio content into Firestore!")) return;
@@ -198,10 +228,29 @@ export default function AdminDashboardOverview() {
             </p>
           </div>
         </div>
-        <div className="flex items-center justify-end">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <button
             type="button"
-            disabled={seeding}
+            disabled={seedingCerts || seeding}
+            onClick={handleSeedCertificatesOnly}
+            className="px-4 py-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
+          >
+            {seedingCerts ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Syncing Certificates...
+              </>
+            ) : (
+              <>
+                <Award className="w-4 h-4" />
+                Seed Certificates Only
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            disabled={seeding || seedingCerts}
             onClick={handleSeedDatabase}
             className="px-4 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
           >
@@ -213,7 +262,7 @@ export default function AdminDashboardOverview() {
             ) : (
               <>
                 <Database className="w-4 h-4" />
-                Seed Original Data
+                Seed Entire Portfolio
               </>
             )}
           </button>

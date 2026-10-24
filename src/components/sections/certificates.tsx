@@ -17,10 +17,10 @@ import {
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { Certificate } from "@/lib/data";
 import {
-  fallbackCertificates,
   getDrivePdfPreviewUrl,
   getDriveThumbnailUrl,
   getDriveViewUrl,
+  resolveCertificates,
 } from "@/lib/data";
 
 function CertificatesSkeleton() {
@@ -65,7 +65,7 @@ export function CertificatesSection() {
 
   if (loading) return <CertificatesSkeleton />;
 
-  const items = certificates.length > 0 ? certificates : fallbackCertificates;
+  const items = resolveCertificates(certificates);
   const previewItems = items.slice(0, 3);
 
   const handleOpenPreview = (cert: Certificate) => {

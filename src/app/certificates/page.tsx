@@ -6,11 +6,11 @@ import Image from "next/image";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { Certificate } from "@/lib/data";
 import {
-  fallbackCertificates,
   getDrivePdfPreviewUrl,
   getDriveThumbnailUrl,
   getDriveViewUrl,
   GOOGLE_DRIVE_CERTIFICATES_FOLDER,
+  resolveCertificates,
 } from "@/lib/data";
 import {
   Award,
@@ -48,18 +48,24 @@ export default function CertificatesPage() {
     };
   }, [selectedCert]);
 
-  // Determine active certificates
+  // Determine active certificates seamlessly
   const allCertificates = useMemo(() => {
-    if (certificatesFromDb && certificatesFromDb.length > 0) {
-      return [...certificatesFromDb].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    }
-    return fallbackCertificates;
+    return resolveCertificates(certificatesFromDb);
   }, [certificatesFromDb]);
 
   const handleOpenPreview = (cert: Certificate) => {
     setIframeLoading(true);
     setSelectedCert(cert);
   };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="text-xs font-mono text-muted-foreground">Loading certificates...</span>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">

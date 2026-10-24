@@ -634,3 +634,66 @@ export const fallbackCertificates: Certificate[] = [
     order: 5,
   },
 ];
+
+/**
+ * Checks whether any of the default fallback certificates exist in the database collection.
+ */
+export function isCertificatesCollectionSeeded(dbCertificates: Certificate[] | undefined | null): boolean {
+  if (!dbCertificates || dbCertificates.length === 0) return false;
+  return dbCertificates.some((c) =>
+    fallbackCertificates.some(
+      (fb) =>
+        fb.id === c.id ||
+        (c.fileId && fb.fileId && c.fileId === fb.fileId) ||
+        (c.driveUrl && fb.driveUrl && c.driveUrl === fb.driveUrl)
+    )
+  );
+}
+
+/**
+ * Returns any fallback certificates that are not currently in the database collection.
+ */
+export function getMissingFallbackCertificates(dbCertificates: Certificate[] | undefined | null): Certificate[] {
+  if (!dbCertificates || dbCertificates.length === 0) return fallbackCertificates;
+  return fallbackCertificates.filter(
+    (fb) =>
+      !dbCertificates.some(
+        (c) =>
+          c.id === fb.id ||
+          (c.fileId && fb.fileId && c.fileId === fb.fileId) ||
+          (c.driveUrl && fb.driveUrl && c.driveUrl === fb.driveUrl) ||
+          (c.title && fb.title && c.title.toLowerCase().trim() === fb.title.toLowerCase().trim())
+      )
+  );
+}
+
+/**
+ * Resolves the active certificates list by seamlessly merging Firestore items with
+ * original portfolio certificates when default certificates have not yet been migrated to the database.
+ */
+export function resolveCertificates(dbCertificates: Certificate[] | undefined | null): Certificate[] {
+  if (!dbCertificates || dbCertificates.length === 0) {
+    return fallbackCertificates;
+  }
+
+  // If default certificates were seeded into the DB, DB is the source of truth
+  const isSeeded = isCertificatesCollectionSeeded(dbCertificates);
+  if (isSeeded) {
+    return [...dbCertificates].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  // If DB only has user-created certificates and none of the original defaults were seeded,
+  // merge missing defaults so original certificates do not vanish.
+  const missing = getMissingFallbackCertificates(dbCertificates);
+  if (missing.length === 0) {
+    return [...dbCertificates].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  const maxDbOrder = Math.max(...dbCertificates.map((c) => c.order ?? 0), -1);
+  const adjustedMissing = missing.map((fb, idx) => ({
+    ...fb,
+    order: fb.order !== undefined && fb.order > maxDbOrder ? fb.order : maxDbOrder + 1 + idx,
+  }));
+
+  return [...dbCertificates, ...adjustedMissing].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+}
