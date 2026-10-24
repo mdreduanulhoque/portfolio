@@ -412,7 +412,7 @@ export const fallbackBlogPosts: BlogPost[] = [
     title: "Welcome to My Digital Archive: Learning, Building, and Teaching",
     slug: "welcome-to-updates",
     excerpt: "Why I built this personal archive, thoughts on engineering fundamentals, teaching as learning, and what to expect here.",
-    content: `# Welcome to My Digital Archive\n\nI built this space as a personal writing archive and blog. In computer science and engineering, things evolve rapidly—new frameworks, new models, and endless abstractions. Yet, the fundamentals remain timeless.\n\n> "Bro, we have one life. Why waste it? Let's follow the orders of God, make Him happy & pass innovations to the next generations."\n\n### Why Write?\nWriting forces clarity of thought. When you can articulate a complex concept simply, you truly understand it. Whether it's dissecting algorithmic edge cases, building web architectures, or sharing life philosophies, this is where I document the journey.\n\n![Workspace & Deep Work](https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80)\n\n### Video Breakdown & Teaching\nTeaching is one of the purest forms of learning. Here is one of my recent problem-solving sessions on Threads in Java:\n\nhttps://youtu.be/uobWZ7FA6XM\n\nStay tuned for more updates, technical deep-dives, and personal reflections!`,
+    content: `# Welcome to My Digital Archive\n\nI built this space as a personal writing archive and blog. In computer science and engineering, things evolve rapidly—new frameworks, new models, and endless abstractions. Yet, the fundamentals remain timeless.\n\n### Why Write?\nWriting forces clarity of thought. When you can articulate a complex concept simply, you truly understand it. Whether it's dissecting algorithmic edge cases, building web architectures, or sharing life philosophies, this is where I document the journey.\n\n![Workspace & Deep Work](https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80)\n\n### Video Breakdown & Teaching\nTeaching is one of the purest forms of learning. Here is one of my recent problem-solving sessions on Threads in Java:\n\nhttps://youtu.be/uobWZ7FA6XM\n\nStay tuned for more updates, technical deep-dives, and personal reflections!`,
     coverImage: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80",
     tags: ["Philosophy", "Engineering", "Teaching"],
     isPublic: true,
@@ -461,7 +461,7 @@ export async function getBlogPostById(id: string): Promise<BlogPost | null> {
 
 export const fallbackProfile: Profile = {
   name: "MD REDUANUL HOQUE",
-  tagline: "\"Bro, we have one life. Why waste it? Let's follow the orders of God, make Him happy & pass innovations to the next generations.\"",
+  tagline: "",
   badges: ["Computer Science Student", "Educator"],
   location: "Dhaka, Bangladesh",
   eduStatus: "5th Trimester B.Sc. in CSE @ UIU",
@@ -696,4 +696,123 @@ export function resolveCertificates(dbCertificates: Certificate[] | undefined | 
   }));
 
   return [...dbCertificates, ...adjustedMissing].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+/**
+ * Checks whether any of the default fallback classes exist in the database collection.
+ */
+export function isClassesCollectionSeeded(dbClasses: ClassItem[] | undefined | null): boolean {
+  if (!dbClasses || dbClasses.length === 0) return false;
+  return dbClasses.some((c) =>
+    fallbackClasses.some(
+      (fb) =>
+        fb.id === c.id ||
+        (c.videoId && fb.videoId && c.videoId === fb.videoId) ||
+        (c.url && fb.url && c.url === fb.url)
+    )
+  );
+}
+
+/**
+ * Returns any fallback classes that are not currently in the database collection.
+ */
+export function getMissingFallbackClasses(dbClasses: ClassItem[] | undefined | null): ClassItem[] {
+  if (!dbClasses || dbClasses.length === 0) return fallbackClasses;
+  return fallbackClasses.filter(
+    (fb) =>
+      !dbClasses.some(
+        (c) =>
+          c.id === fb.id ||
+          (c.videoId && fb.videoId && c.videoId === fb.videoId) ||
+          (c.url && fb.url && c.url === fb.url) ||
+          (c.title && fb.title && c.title.toLowerCase().trim() === fb.title.toLowerCase().trim())
+      )
+  );
+}
+
+/**
+ * Resolves the active classes list by seamlessly merging Firestore items with
+ * original portfolio classes when default classes have not yet been migrated to the database.
+ */
+export function resolveClasses(dbClasses: ClassItem[] | undefined | null): ClassItem[] {
+  if (!dbClasses || dbClasses.length === 0) {
+    return fallbackClasses;
+  }
+
+  const isSeeded = isClassesCollectionSeeded(dbClasses);
+  if (isSeeded) {
+    return [...dbClasses].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  const missing = getMissingFallbackClasses(dbClasses);
+  if (missing.length === 0) {
+    return [...dbClasses].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  const maxDbOrder = Math.max(...dbClasses.map((c) => c.order ?? 0), -1);
+  const adjustedMissing = missing.map((fb, idx) => ({
+    ...fb,
+    order: fb.order !== undefined && fb.order > maxDbOrder ? fb.order : maxDbOrder + 1 + idx,
+  }));
+
+  return [...dbClasses, ...adjustedMissing].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+/**
+ * Checks whether any of the default fallback projects exist in the database collection.
+ */
+export function isProjectsCollectionSeeded(dbProjects: Project[] | undefined | null): boolean {
+  if (!dbProjects || dbProjects.length === 0) return false;
+  return dbProjects.some((p) =>
+    fallbackProjects.some(
+      (fb) =>
+        fb.id === p.id ||
+        (p.githubLink && fb.githubLink && p.githubLink === fb.githubLink) ||
+        (p.title && fb.title && p.title.toLowerCase().trim() === fb.title.toLowerCase().trim())
+    )
+  );
+}
+
+/**
+ * Returns any fallback projects that are not currently in the database collection.
+ */
+export function getMissingFallbackProjects(dbProjects: Project[] | undefined | null): Project[] {
+  if (!dbProjects || dbProjects.length === 0) return fallbackProjects;
+  return fallbackProjects.filter(
+    (fb) =>
+      !dbProjects.some(
+        (p) =>
+          p.id === fb.id ||
+          (p.githubLink && fb.githubLink && p.githubLink === fb.githubLink) ||
+          (p.title && fb.title && p.title.toLowerCase().trim() === fb.title.toLowerCase().trim())
+      )
+  );
+}
+
+/**
+ * Resolves the active projects list by seamlessly merging Firestore items with
+ * original portfolio projects when default projects have not yet been migrated to the database.
+ */
+export function resolveProjects(dbProjects: Project[] | undefined | null): Project[] {
+  if (!dbProjects || dbProjects.length === 0) {
+    return fallbackProjects;
+  }
+
+  const isSeeded = isProjectsCollectionSeeded(dbProjects);
+  if (isSeeded) {
+    return [...dbProjects].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  const missing = getMissingFallbackProjects(dbProjects);
+  if (missing.length === 0) {
+    return [...dbProjects].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  const maxDbOrder = Math.max(...dbProjects.map((c) => c.order ?? 0), -1);
+  const adjustedMissing = missing.map((fb, idx) => ({
+    ...fb,
+    order: fb.order !== undefined && fb.order > maxDbOrder ? fb.order : maxDbOrder + 1 + idx,
+  }));
+
+  return [...dbProjects, ...adjustedMissing].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }

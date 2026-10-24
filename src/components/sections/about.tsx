@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { GraduationCap, Briefcase, BookOpen, Trophy, Heart } from "lucide-react";
+import { GraduationCap, Briefcase, BookOpen } from "lucide-react";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
-import type { Profile, Education, Experience, Achievement } from "@/lib/data";
-import { fallbackEducation, fallbackExperience, fallbackAchievements } from "@/lib/data";
+import type { Profile, Education, Experience } from "@/lib/data";
+import { fallbackEducation, fallbackExperience } from "@/lib/data";
 
 
 
@@ -24,7 +24,6 @@ function AboutSkeleton() {
                 <div className="grid lg:grid-cols-12 gap-12">
                     <div className="lg:col-span-4 space-y-8">
                         <div className="h-48 bg-muted animate-pulse rounded-2xl" />
-                        <div className="h-24 bg-muted animate-pulse rounded-2xl" />
                     </div>
                     <div className="lg:col-span-8 grid sm:grid-cols-2 gap-8">
                         <div className="h-64 bg-muted animate-pulse rounded-2xl" />
@@ -40,16 +39,13 @@ export function AboutSection() {
     const { data: profile, loading: profileLoading } = useFirestoreDoc<Profile>("profile", "main");
     const { data: education, loading: eduLoading } = useFirestoreCollection<Education>("education");
     const { data: experience, loading: expLoading } = useFirestoreCollection<Experience>("experience");
-    const { data: achievements, loading: achLoading } = useFirestoreCollection<Achievement>("achievements");
 
-    const loading = profileLoading || eduLoading || expLoading || achLoading;
+    const loading = profileLoading || eduLoading || expLoading;
 
     if (loading) return <AboutSkeleton />;
 
     const eduItems = education.length > 0 ? education : fallbackEducation;
     const expItems = experience.length > 0 ? experience : fallbackExperience;
-    const achItems = achievements.length > 0 ? achievements : fallbackAchievements;
-    const hobbies = profile?.hobbies || ["Reading", "Football", "Analyzing games", "Exploring", "Coffee ☕"];
     const philosophyTitle = profile?.philosophyTitle || "The Philosophy";
     const philosophyParagraphs = profile?.philosophyParagraphs || [
         "I'm a passionate Computer Science and Engineering student at UIU. I find joy in problem-solving, building web applications, and diving deep into the fundamentals of how things work.",
@@ -70,7 +66,7 @@ export function AboutSection() {
 
                 <div className="grid lg:grid-cols-12 gap-12 text-muted-foreground">
 
-                    {/* Left Column: Intro & Hobbies */}
+                    {/* Left Column: Intro / Philosophy */}
                     <div className="lg:col-span-4 space-y-8">
                         <div className="bg-background/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
@@ -82,36 +78,6 @@ export function AboutSection() {
                                     {para}
                                 </p>
                             ))}
-                        </div>
-
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                                <Heart className="h-4 w-4 text-rose-500" /> System Variables (Hobbies)
-                            </h3>
-                            <div className="flex flex-wrap gap-2">
-                                {hobbies.map((hobby) => (
-                                    <span key={hobby} className="px-3 py-1 bg-muted rounded-md text-xs font-mono text-foreground border border-border/50 hover:border-primary/50 transition-colors">
-                                        {hobby}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                                <Trophy className="h-4 w-4 text-emerald-500" /> Achievements
-                            </h3>
-                            <div className="space-y-3">
-                                {achItems.map((ach) => (
-                                    <div key={ach.id} className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 text-sm font-medium flex items-start gap-3">
-                                        <span className="text-2xl leading-none">{ach.emoji}</span>
-                                        <div>
-                                            <p className="font-bold">{ach.title}</p>
-                                            <p className="text-xs opacity-80 mt-1">{ach.subtitle}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
                         </div>
                     </div>
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { Project } from "@/lib/data";
-import { fallbackProjects, getProjectImageUrl } from "@/lib/data";
+import { getProjectImageUrl, resolveProjects } from "@/lib/data";
 import {
   ArrowLeft,
   Github,
@@ -44,12 +44,9 @@ export default function ProjectsPage() {
     };
   }, [selectedProject]);
 
-  // Determine active projects
+  // Determine active projects seamlessly
   const allProjects = useMemo(() => {
-    if (projectsFromDb && projectsFromDb.length > 0) {
-      return [...projectsFromDb].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    }
-    return fallbackProjects;
+    return resolveProjects(projectsFromDb);
   }, [projectsFromDb]);
 
   // Compute available technologies for filtering

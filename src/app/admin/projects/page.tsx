@@ -1,13 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { db } from "@/lib/firebase";
-import { doc, addDoc, updateDoc, deleteDoc, collection } from "firebase/firestore";
+import { doc, addDoc, setDoc, deleteDoc, collection, writeBatch } from "firebase/firestore";
 import type { Project } from "@/lib/data";
-import { swapCollectionOrder, normalizeImageUrl, getProjectImageUrl } from "@/lib/data";
+import {
+  swapCollectionOrder,
+  normalizeImageUrl,
+  getProjectImageUrl,
+  resolveProjects,
+  getMissingFallbackProjects,
+  isProjectsCollectionSeeded,
+} from "@/lib/data";
 import toast from "react-hot-toast";
 import {
   Save,
@@ -22,6 +29,8 @@ import {
   Image as ImageIcon,
   Loader2,
   Sparkles,
+  AlertCircle,
+  Database,
 } from "lucide-react";
 
 export default function AdminProjectsPage() {
@@ -37,10 +46,26 @@ export default function AdminProjectsPage() {
   const [liveLink, setLiveLink] = useState("");
   const [githubLink, setGithubLink] = useState("");
   const [formLoading, setFormLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
 
   // Array inputs
   const [newTech, setNewTech] = useState("");
   const [newFeature, setNewFeature] = useState("");
+
+  // Unified resolution: ensure fallback projects do not disappear when new ones are added
+  const displayProjects = useMemo(() => {
+    return resolveProjects(projects);
+  }, [projects]);
+
+  const missingFallbacks = useMemo(() => {
+    return getMissingFallbackProjects(projects);
+  }, [projects]);
+
+  const isSeeded = useMemo(() => {
+    return isProjectsCollectionSeeded(projects);
+  }, [projects]);
+
+  const hasUnseededDefaults = !isSeeded && missingFallbacks.length > 0;
 
   const resetForm = () => {
     setTitle("");
@@ -69,6 +94,11 @@ export default function AdminProjectsPage() {
     e.preventDefault();
     setFormLoading(true);
 
+    const existingProject = displayProjects.find((p) => p.id === editingId);
+    const existingMaxOrder = displayProjects.length > 0
+      ? Math.max(...displayProjects.map((p) => p.order ?? 0))
+      : -1;
+
     const data: Record<string, unknown> = {
       title: title.trim(),
       description: description.trim(),
@@ -77,12 +107,14 @@ export default function AdminProjectsPage() {
       liveLink: liveLink.trim(),
       githubLink: githubLink.trim(),
       imageUrl: imageUrl.trim(),
-      order: editingId ? (projects.find((p) => p.id === editingId)?.order ?? 0) : projects.length,
+      order: editingId
+        ? (existingProject?.order ?? 0)
+        : Math.max(displayProjects.length, existingMaxOrder + 1),
     };
 
     try {
       if (editingId) {
-        await updateDoc(doc(db, "projects", editingId), data);
+        await setDoc(doc(db, "projects", editingId), data, { merge: true });
         toast.success("Project updated!");
       } else {
         await addDoc(collection(db, "projects"), data);
@@ -101,12 +133,96 @@ export default function AdminProjectsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this project?")) return;
     try {
-      await deleteDoc(doc(db, "projects", id));
-      toast.success("Project deleted!");
+      const existsInDb = projects.some((p) => p.id === id);
+      if (existsInDb) {
+        await deleteDoc(doc(db, "projects", id));
+        toast.success("Project deleted!");
+      } else {
+        const batch = writeBatch(db);
+        const remainingFallbacks = missingFallbacks.filter((fb) => fb.id !== id);
+        const existingMaxOrder = projects.length > 0
+          ? Math.max(...projects.map((p) => p.order ?? 0))
+          : -1;
+
+        remainingFallbacks.forEach((item, index) => {
+          const docRef = doc(db, "projects", item.id);
+          const data = {
+            title: item.title,
+            description: item.description,
+            techStack: item.techStack,
+            features: item.features || [],
+            liveLink: item.liveLink || "",
+            githubLink: item.githubLink || "",
+            imageUrl: item.imageUrl || "",
+            order: existingMaxOrder + 1 + index,
+          };
+          batch.set(docRef, data);
+        });
+
+        await batch.commit();
+        toast.success("Project removed from portfolio!");
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(err);
       toast.error(`Error: ${msg}`);
+    }
+  };
+
+  const handleSyncDefaultProjects = async () => {
+    setSyncLoading(true);
+    try {
+      const batch = writeBatch(db);
+      const existingMaxOrder = projects.length > 0
+        ? Math.max(...projects.map((c) => c.order ?? 0))
+        : -1;
+
+      missingFallbacks.forEach((item, index) => {
+        const docRef = doc(db, "projects", item.id);
+        const data = {
+          title: item.title,
+          description: item.description,
+          techStack: item.techStack,
+          features: item.features || [],
+          liveLink: item.liveLink || "",
+          githubLink: item.githubLink || "",
+          imageUrl: item.imageUrl || "",
+          order: existingMaxOrder + 1 + index,
+        };
+        batch.set(docRef, data);
+      });
+
+      await batch.commit();
+      toast.success(`Successfully saved ${missingFallbacks.length} original projects to Firestore!`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Sync failed: ${msg}`);
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  const handleSaveSingleDefault = async (proj: Project) => {
+    try {
+      const docRef = doc(db, "projects", proj.id);
+      const existingMaxOrder = projects.length > 0
+        ? Math.max(...projects.map((c) => c.order ?? 0))
+        : -1;
+      const data = {
+        title: proj.title,
+        description: proj.description,
+        techStack: proj.techStack,
+        features: proj.features || [],
+        liveLink: proj.liveLink || "",
+        githubLink: proj.githubLink || "",
+        imageUrl: proj.imageUrl || "",
+        order: existingMaxOrder + 1,
+      };
+      await setDoc(docRef, data);
+      toast.success(`"${proj.title}" saved to Firestore!`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Save failed: ${msg}`);
     }
   };
 
@@ -135,6 +251,10 @@ export default function AdminProjectsPage() {
   };
 
   const moveOrder = async (index: number, direction: "up" | "down") => {
+    if (hasUnseededDefaults) {
+      toast.error("Please click 'Sync Defaults to Database' first to enable reordering across all projects.");
+      return;
+    }
     try {
       const swapped = await swapCollectionOrder("projects", projects, index, direction);
       if (swapped) toast.success("Order updated!");
@@ -168,14 +288,33 @@ export default function AdminProjectsPage() {
           </p>
         </div>
 
-        <Link
-          href="/projects"
-          target="_blank"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border/70 bg-card hover:bg-accent text-foreground text-xs font-mono transition-colors shrink-0 cursor-pointer"
-        >
-          <span>View Public Page</span>
-          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-        </Link>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          {hasUnseededDefaults && (
+            <button
+              type="button"
+              onClick={handleSyncDefaultProjects}
+              disabled={syncLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-colors cursor-pointer disabled:opacity-50"
+              title="Save all default fallback projects directly to Firestore"
+            >
+              {syncLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Database className="w-3.5 h-3.5" />
+              )}
+              <span>Sync Defaults ({missingFallbacks.length})</span>
+            </button>
+          )}
+
+          <Link
+            href="/projects"
+            target="_blank"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border/70 bg-card hover:bg-accent text-foreground text-xs font-mono transition-colors shrink-0 cursor-pointer"
+          >
+            <span>View Public Page</span>
+            <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+          </Link>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8 items-start">
@@ -404,119 +543,175 @@ export default function AdminProjectsPage() {
 
         {/* Right Column: Listing */}
         <div className="lg:col-span-6 space-y-4">
+          {hasUnseededDefaults && (
+            <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-bold font-lora text-sm sm:text-base text-foreground">
+                    {missingFallbacks.length} Original Projects Not Synced to Database
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed font-sans">
+                    These projects are currently visible on your public site. Save them to Firestore so you can customize, edit, or reorder each entry directly.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleSyncDefaultProjects}
+                disabled={syncLoading}
+                className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-2 cursor-pointer transition-colors shadow-sm shrink-0 disabled:opacity-50"
+              >
+                {syncLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Database className="w-3.5 h-3.5" />
+                )}
+                <span>Sync {missingFallbacks.length} Defaults to DB</span>
+              </button>
+            </div>
+          )}
+
           <div className="rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden">
             <div className="p-4 border-b border-border/40 font-lora font-bold text-foreground flex items-center justify-between">
-              <span>Project Showcase ({projects.length})</span>
+              <span>Project Showcase ({displayProjects.length})</span>
               <span className="text-xs font-mono text-muted-foreground">Order: Top to Bottom</span>
             </div>
             <div className="divide-y divide-border/40">
-              {projects.length === 0 ? (
+              {displayProjects.length === 0 ? (
                 <div className="p-6 text-center text-muted-foreground text-xs font-mono">
                   No records stored yet. Using fallback values on public site.
                 </div>
               ) : (
-                projects.map((proj, idx) => (
-                  <div key={proj.id} className="p-4 flex items-start gap-4 justify-between group">
-                    <div className="flex gap-3 items-start flex-1 min-w-0">
-                      {/* Screenshot Thumbnail */}
-                      <div className="relative w-20 aspect-video rounded-lg overflow-hidden bg-muted shrink-0 border border-border/50">
-                        {(() => {
-                          const thumb = getProjectImageUrl(proj);
-                          return thumb ? (
-                            <Image
-                              src={thumb}
-                              alt={proj.title}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                              <ImageIcon className="w-4 h-4 opacity-50" />
-                            </div>
-                          );
-                        })()}
-                      </div>
+                displayProjects.map((proj, idx) => {
+                  const isStoredInDb = projects.some((p) => p.id === proj.id);
 
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <h4 className="font-bold text-foreground text-sm line-clamp-1">{proj.title}</h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                          {proj.description}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {proj.techStack?.map((tech) => (
-                            <span
-                              key={tech}
-                              className="px-2 py-0.5 bg-muted text-foreground border border-border rounded text-[9px] uppercase font-bold tracking-wider"
-                            >
-                              {tech}
-                            </span>
-                          ))}
+                  return (
+                    <div key={proj.id} className="p-4 flex items-start gap-4 justify-between group">
+                      <div className="flex gap-3 items-start flex-1 min-w-0">
+                        {/* Screenshot Thumbnail */}
+                        <div className="relative w-20 aspect-video rounded-lg overflow-hidden bg-muted shrink-0 border border-border/50">
+                          {(() => {
+                            const thumb = getProjectImageUrl(proj);
+                            return thumb ? (
+                              <Image
+                                src={thumb}
+                                alt={proj.title}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                <ImageIcon className="w-4 h-4 opacity-50" />
+                              </div>
+                            );
+                          })()}
                         </div>
-                        {(proj.githubLink || proj.liveLink) && (
-                          <div className="flex items-center gap-3 pt-1 text-[11px] font-mono text-muted-foreground">
-                            {proj.githubLink && (
-                              <a
-                                href={proj.githubLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                <Github className="w-3 h-3" /> GitHub
-                              </a>
-                            )}
-                            {proj.liveLink && (
-                              <a
-                                href={proj.liveLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                <ExternalLink className="w-3 h-3" /> Live Demo
-                              </a>
+
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="font-bold text-foreground text-sm line-clamp-1">{proj.title}</h4>
+                            {!isStoredInDb && (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                Portfolio Default
+                              </span>
                             )}
                           </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                            {proj.description}
+                          </p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {proj.techStack?.map((tech) => (
+                              <span
+                                key={tech}
+                                className="px-2 py-0.5 bg-muted text-foreground border border-border rounded text-[9px] uppercase font-bold tracking-wider"
+                              >
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+                          {(proj.githubLink || proj.liveLink) && (
+                            <div className="flex items-center gap-3 pt-1 text-[11px] font-mono text-muted-foreground">
+                              {proj.githubLink && (
+                                <a
+                                  href={proj.githubLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Github className="w-3 h-3" /> GitHub
+                                </a>
+                              )}
+                              {proj.liveLink && (
+                                <a
+                                  href={proj.liveLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="hover:text-primary inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <ExternalLink className="w-3 h-3" /> Live Demo
+                                </a>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+                        {!isStoredInDb && (
+                          <button
+                            type="button"
+                            onClick={() => handleSaveSingleDefault(proj)}
+                            title="Save this default project to Database"
+                            className="p-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 cursor-pointer"
+                          >
+                            <Database className="w-3.5 h-3.5" />
+                          </button>
                         )}
+
+                        {isStoredInDb && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => moveOrder(idx, "up")}
+                              disabled={idx === 0}
+                              aria-label={`Move ${proj.title} up`}
+                              className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
+                            >
+                              <ArrowUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveOrder(idx, "down")}
+                              disabled={idx === projects.length - 1}
+                              aria-label={`Move ${proj.title} down`}
+                              className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
+                            >
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(proj)}
+                          aria-label={`Edit ${proj.title}`}
+                          className="p-1.5 rounded-lg border border-border bg-background text-primary hover:bg-primary/10 cursor-pointer"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(proj.id)}
+                          aria-label={`Delete ${proj.title}`}
+                          className="p-1.5 rounded-lg border border-border bg-background text-red-500 hover:bg-red-500/10 cursor-pointer"
+                        >
+                          <Trash className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        onClick={() => moveOrder(idx, "up")}
-                        disabled={idx === 0}
-                        aria-label={`Move ${proj.title} up`}
-                        className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
-                      >
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveOrder(idx, "down")}
-                        disabled={idx === projects.length - 1}
-                        aria-label={`Move ${proj.title} down`}
-                        className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-30 cursor-pointer"
-                      >
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(proj)}
-                        aria-label={`Edit ${proj.title}`}
-                        className="p-1.5 rounded-lg border border-border bg-background text-primary hover:bg-primary/10 cursor-pointer"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(proj.id)}
-                        aria-label={`Delete ${proj.title}`}
-                        className="p-1.5 rounded-lg border border-border bg-background text-red-500 hover:bg-red-500/10 cursor-pointer"
-                      >
-                        <Trash className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

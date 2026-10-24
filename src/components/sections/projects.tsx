@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { Project } from "@/lib/data";
-import { fallbackProjects, getProjectImageUrl } from "@/lib/data";
+import { getProjectImageUrl, resolveProjects } from "@/lib/data";
 
 function ProjectsSkeleton() {
   return (
@@ -38,7 +38,7 @@ export function ProjectsSection() {
 
   if (loading) return <ProjectsSkeleton />;
 
-  const items = projects.length > 0 ? projects : fallbackProjects;
+  const items = resolveProjects(projects);
   const previewItems = items.slice(0, 3);
 
   return (

@@ -6,10 +6,10 @@ import Image from "next/image";
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { ClassItem } from "@/lib/data";
 import {
-  fallbackClasses,
   getYouTubeThumbnailUrl,
   getYouTubeEmbedUrl,
   getYouTubeWatchUrl,
+  resolveClasses,
 } from "@/lib/data";
 import {
   ArrowLeft,
@@ -47,12 +47,9 @@ export default function ClassesPage() {
     };
   }, [selectedClass]);
 
-  // Determine active classes
+  // Determine active classes seamlessly
   const allClasses = useMemo(() => {
-    if (classesFromDb && classesFromDb.length > 0) {
-      return [...classesFromDb].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    }
-    return fallbackClasses;
+    return resolveClasses(classesFromDb);
   }, [classesFromDb]);
 
   // Filtered classes based on search

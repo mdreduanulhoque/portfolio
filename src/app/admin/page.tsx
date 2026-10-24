@@ -7,7 +7,7 @@ import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, writeBatch } from "firebase/firestore";
 import type { Profile, Education, Experience, Achievement, Project, Skill, ClassItem, Certificate, SocialLinks, BlogPost } from "@/lib/data";
-import { fallbackBlogPosts, fallbackProfile, fallbackSocialLinks, fallbackEducation, fallbackExperience, fallbackAchievements, fallbackProjects, fallbackSkills, fallbackClasses, fallbackCertificates, resolveCertificates } from "@/lib/data";
+import { fallbackBlogPosts, fallbackProfile, fallbackSocialLinks, fallbackEducation, fallbackExperience, fallbackAchievements, fallbackProjects, fallbackSkills, fallbackClasses, fallbackCertificates, resolveCertificates, resolveClasses, resolveProjects } from "@/lib/data";
 import {
   User,
   GraduationCap,
@@ -41,6 +41,8 @@ export default function AdminDashboardOverview() {
 
   const [seeding, setSeeding] = useState(false);
   const [seedingCerts, setSeedingCerts] = useState(false);
+  const [seedingClasses, setSeedingClasses] = useState(false);
+  const [seedingProjects, setSeedingProjects] = useState(false);
 
   const sections = [
     { name: "Updates", count: updates.length, href: "/admin/updates", icon: Newspaper, desc: "Write, edit, and archive blog articles, thoughts, and updates." },
@@ -48,12 +50,70 @@ export default function AdminDashboardOverview() {
     { name: "Education", count: edu.length, href: "/admin/education", icon: GraduationCap, desc: "Manage university, high school, degrees, and GPA info." },
     { name: "Experience", count: exp.length, href: "/admin/experience", icon: Briefcase, desc: "Manage roles, organizations, dates, and descriptions." },
     { name: "Achievements", count: achievements.length, href: "/admin/achievements", icon: Trophy, desc: "Manage awards, contest runner-ups, and emojis." },
-    { name: "Projects", count: projects.length, href: "/admin/projects", icon: Code2, desc: "Manage coding projects, features, tech stack, and URLs." },
+    { name: "Projects", count: resolveProjects(projects).length, href: "/admin/projects", icon: Code2, desc: "Manage coding projects, features, tech stack, and URLs." },
     { name: "Skills", count: skills.length, href: "/admin/skills", icon: BookOpen, desc: "Manage skills list, file size style, and categories." },
-    { name: "Classes", count: classes.length, href: "/admin/classes", icon: Video, desc: "Manage YouTube classes, descriptions, and video IDs." },
+    { name: "Classes", count: resolveClasses(classes).length, href: "/admin/classes", icon: Video, desc: "Manage YouTube classes, descriptions, and video IDs." },
     { name: "Certificates", count: resolveCertificates(certificates).length, href: "/admin/certificates", icon: Award, desc: "Manage Google Drive PDF certificates, issuers, dates, and awards." },
     { name: "Social Links", count: socialLinks ? 1 : 0, href: "/admin/social-links", icon: Share2, desc: "Manage social profiles, email, and resume URLs." },
   ];
+
+  const handleSeedClassesOnly = async () => {
+    if (!confirm("Seed default classes to Firestore? This will add any missing original classes without modifying any other section.")) return;
+    setSeedingClasses(true);
+    try {
+      const batch = writeBatch(db);
+      const existingMaxOrder = classes.length > 0
+        ? Math.max(...classes.map((c) => c.order ?? 0))
+        : -1;
+
+      fallbackClasses.forEach((item, index) => {
+        const alreadyExists = classes.some(c => c.id === item.id || (c.videoId && c.videoId === item.videoId));
+        if (!alreadyExists) {
+          const docRef = doc(db, "classes", item.id);
+          const data = { ...item, order: existingMaxOrder + 1 + index };
+          delete (data as { id?: string }).id;
+          batch.set(docRef, data);
+        }
+      });
+
+      await batch.commit();
+      toast.success("Classes synced to Firestore successfully!");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Failed to sync classes: ${msg}`);
+    } finally {
+      setSeedingClasses(false);
+    }
+  };
+
+  const handleSeedProjectsOnly = async () => {
+    if (!confirm("Seed default projects to Firestore? This will add any missing original projects without modifying any other section.")) return;
+    setSeedingProjects(true);
+    try {
+      const batch = writeBatch(db);
+      const existingMaxOrder = projects.length > 0
+        ? Math.max(...projects.map((p) => p.order ?? 0))
+        : -1;
+
+      fallbackProjects.forEach((item, index) => {
+        const alreadyExists = projects.some(p => p.id === item.id || (p.githubLink && p.githubLink === item.githubLink));
+        if (!alreadyExists) {
+          const docRef = doc(db, "projects", item.id);
+          const data = { ...item, order: existingMaxOrder + 1 + index };
+          delete (data as { id?: string }).id;
+          batch.set(docRef, data);
+        }
+      });
+
+      await batch.commit();
+      toast.success("Projects synced to Firestore successfully!");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Failed to sync projects: ${msg}`);
+    } finally {
+      setSeedingProjects(false);
+    }
+  };
 
   const handleSeedCertificatesOnly = async () => {
     if (!confirm("Seed default certificates to Firestore? This will add any missing original certificates to your database without modifying any other section.")) return;
@@ -231,6 +291,44 @@ export default function AdminDashboardOverview() {
         <div className="flex flex-wrap items-center justify-end gap-3">
           <button
             type="button"
+            disabled={seedingProjects || seeding}
+            onClick={handleSeedProjectsOnly}
+            className="px-4 py-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
+          >
+            {seedingProjects ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Syncing Projects...
+              </>
+            ) : (
+              <>
+                <Code2 className="w-4 h-4" />
+                Seed Projects Only
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            disabled={seedingClasses || seeding}
+            onClick={handleSeedClassesOnly}
+            className="px-4 py-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
+          >
+            {seedingClasses ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Syncing Classes...
+              </>
+            ) : (
+              <>
+                <Video className="w-4 h-4" />
+                Seed Classes Only
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
             disabled={seedingCerts || seeding}
             onClick={handleSeedCertificatesOnly}
             className="px-4 py-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
@@ -250,7 +348,7 @@ export default function AdminDashboardOverview() {
 
           <button
             type="button"
-            disabled={seeding || seedingCerts}
+            disabled={seeding || seedingCerts || seedingClasses || seedingProjects}
             onClick={handleSeedDatabase}
             className="px-4 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
           >

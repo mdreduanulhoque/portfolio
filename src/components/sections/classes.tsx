@@ -16,10 +16,10 @@ import {
 import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import type { ClassItem } from "@/lib/data";
 import {
-  fallbackClasses,
   getYouTubeThumbnailUrl,
   getYouTubeEmbedUrl,
   getYouTubeWatchUrl,
+  resolveClasses,
 } from "@/lib/data";
 
 function ClassesSkeleton() {
@@ -64,7 +64,7 @@ export function ClassesSection() {
 
   if (loading) return <ClassesSkeleton />;
 
-  const items = classes.length > 0 ? classes : fallbackClasses;
+  const items = resolveClasses(classes);
   const previewItems = items.slice(0, 3);
 
   const handleOpenPlayer = (item: ClassItem) => {

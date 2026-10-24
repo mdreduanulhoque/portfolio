@@ -143,9 +143,11 @@ export function HeroSection() {
                                 </h1>
                             </div>
                         </div>
-                        <p className="max-w-[42rem] mt-6 leading-relaxed text-muted-foreground sm:text-lg text-center sm:text-left">
-                            <strong className="text-foreground font-medium">&quot;Bro, we have one life. Why waste it?</strong> Let&apos;s follow the orders of God, make Him happy &amp; pass innovations to the next generations.&quot;
-                        </p>
+                        {p.tagline && !p.tagline.includes("Bro, we have one life") && (
+                            <p className="max-w-[42rem] mt-6 leading-relaxed text-muted-foreground sm:text-lg text-center sm:text-left">
+                                {p.tagline}
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 pt-2">
