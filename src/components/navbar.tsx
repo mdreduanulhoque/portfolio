@@ -82,7 +82,6 @@ export function Navbar() {
     }
 
     const isHome = pathname === "/";
-    const isUpdates = pathname?.startsWith("/updates") ?? false;
     const isProjects = pathname?.startsWith("/projects") ?? false;
     const isClasses = pathname?.startsWith("/classes") ?? false;
     const isCertificates = pathname?.startsWith("/certificates") ?? false;
@@ -134,16 +133,6 @@ export function Navbar() {
                         </Link>
                         <Link href={getSectionHref("#skills")} className="hidden sm:inline-block transition-colors hover:text-primary">Skills</Link>
                         <Link href={getSectionHref("#contact")} className="transition-colors hover:text-primary">Contact</Link>
-                        <Link
-                            href="/updates"
-                            className={`transition-colors relative py-1 hover:text-primary ${
-                                isUpdates
-                                    ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
-                                    : "text-muted-foreground"
-                            }`}
-                        >
-                            Updates
-                        </Link>
                     </nav>
 
                     <div className="flex items-center gap-4">
