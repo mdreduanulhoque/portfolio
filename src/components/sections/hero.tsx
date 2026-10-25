@@ -14,17 +14,17 @@ function HeroSkeleton() {
     return (
         <section className="relative flex min-h-[calc(100vh-4rem)] items-center px-4 overflow-hidden pt-12 pb-24 md:py-0">
             <div className="container mx-auto max-w-6xl grid md:grid-cols-2 gap-12 items-center">
-                <div className="space-y-8">
+                <div className="space-y-8 min-w-0">
                     <div className="space-y-4">
-                        <div className="flex gap-3">
-                            <div className="h-7 w-48 bg-muted animate-pulse rounded-full" />
-                            <div className="h-7 w-24 bg-muted animate-pulse rounded-full" />
+                        <div className="flex flex-wrap gap-3">
+                            <div className="h-7 w-48 max-w-full bg-muted animate-pulse rounded-full" />
+                            <div className="h-7 w-24 max-w-full bg-muted animate-pulse rounded-full" />
                         </div>
-                        <div className="h-16 w-80 bg-muted animate-pulse rounded-lg" />
+                        <div className="h-16 w-80 max-w-full bg-muted animate-pulse rounded-lg" />
                         <div className="h-20 w-full bg-muted animate-pulse rounded-lg" />
                     </div>
                 </div>
-                <div className="h-72 bg-muted animate-pulse rounded-xl" />
+                <div className="h-72 min-w-0 bg-muted animate-pulse rounded-xl" />
             </div>
         </section>
     );
@@ -112,7 +112,7 @@ export function HeroSection() {
 
             <div className="container mx-auto max-w-6xl grid md:grid-cols-2 gap-12 items-center">
                 {/* Text Content */}
-                <div className="space-y-8 animate-in fade-in slide-in-from-left-8 duration-1000 fill-mode-both">
+                <div className="space-y-8 min-w-0 animate-in fade-in slide-in-from-left-8 duration-1000 fill-mode-both">
                     <div className="space-y-4">
                         <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
                             {p.badges.map((badge, i) => (
@@ -172,7 +172,7 @@ export function HeroSection() {
                 </div>
 
                 {/* Mock Terminal block for Nerd Vibe */}
-                <div className="relative animate-in fade-in slide-in-from-right-8 duration-1000 delay-300 fill-mode-both">
+                <div className="relative min-w-0 animate-in fade-in slide-in-from-right-8 duration-1000 delay-300 fill-mode-both">
                     <div className="absolute -inset-1 bg-gradient-to-r from-primary to-cyan-500 rounded-xl blur-md opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                     <div className="relative rounded-xl border border-border/50 bg-[#0f172a] shadow-2xl overflow-hidden">
                         <div className="flex items-center px-4 py-3 bg-[#1e293b] border-b border-border/20">

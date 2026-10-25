@@ -15,7 +15,7 @@ import { fallbackEducation, fallbackExperience } from "@/lib/data";
 
 function AboutSkeleton() {
     return (
-        <section id="about" className="py-24 bg-muted/30 relative">
+        <section id="about" className="py-24 bg-muted/30 relative overflow-hidden">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
                 <div className="flex flex-col items-center gap-4 mb-16">
                     <div className="h-7 w-32 bg-muted animate-pulse rounded-full" />
@@ -53,7 +53,7 @@ export function AboutSection() {
     ];
 
     return (
-        <section id="about" className="py-24 bg-muted/30 relative">
+        <section id="about" className="py-24 bg-muted/30 relative overflow-hidden">
             <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent"></div>
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">

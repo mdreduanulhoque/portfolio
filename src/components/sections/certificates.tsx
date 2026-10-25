@@ -25,11 +25,11 @@ import {
 
 function CertificatesSkeleton() {
   return (
-    <section id="certificates" className="py-24 bg-muted/10 relative border-t border-border/50">
+    <section id="certificates" className="py-24 bg-muted/10 relative overflow-hidden border-t border-border/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
         <div className="flex flex-col items-center gap-4 mb-16 text-center">
-          <div className="h-7 w-48 bg-muted animate-pulse rounded-full" />
-          <div className="h-12 w-80 bg-muted animate-pulse rounded-lg" />
+          <div className="h-7 w-48 max-w-full bg-muted animate-pulse rounded-full" />
+          <div className="h-12 w-80 max-w-full bg-muted animate-pulse rounded-lg" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -74,7 +74,7 @@ export function CertificatesSection() {
   };
 
   return (
-    <section id="certificates" className="py-24 bg-muted/10 relative border-t border-border/50">
+    <section id="certificates" className="py-24 bg-muted/10 relative overflow-hidden border-t border-border/50">
       <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">

@@ -24,7 +24,7 @@ import {
 
 function ClassesSkeleton() {
   return (
-    <section id="classes" className="py-24 bg-muted/30 relative border-t border-border/50">
+    <section id="classes" className="py-24 bg-muted/30 relative overflow-hidden border-t border-border/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
         <div className="flex flex-col items-center gap-4 mb-16">
           <div className="h-7 w-36 bg-muted animate-pulse rounded-full" />
@@ -73,7 +73,7 @@ export function ClassesSection() {
   };
 
   return (
-    <section id="classes" className="py-24 bg-muted/30 relative border-t border-border/50">
+    <section id="classes" className="py-24 bg-muted/30 relative overflow-hidden border-t border-border/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">

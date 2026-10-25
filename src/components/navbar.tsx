@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import { fallbackProfile, type Profile } from "@/lib/data";
@@ -25,6 +26,20 @@ export function Navbar() {
     const pathname = usePathname();
     const { data: profile } = useFirestoreDoc<Profile>("profile", "main");
     const profileImageUrl = profile?.profileImageUrl || fallbackProfile.profileImageUrl;
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!isMobileMenuOpen) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setIsMobileMenuOpen(false);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isMobileMenuOpen]);
 
     React.useEffect(() => {
         if (!profileImageUrl) return;
@@ -91,6 +106,10 @@ export function Navbar() {
         return isHome ? hash : `/${hash}`;
     };
 
+    const closeMobileMenu = () => {
+        setIsMobileMenuOpen(false);
+    };
+
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -99,7 +118,8 @@ export function Navbar() {
                         {/* Logo removed as per user request */}
                     </div>
 
-                    <nav className="flex items-center gap-4 sm:gap-6 text-sm font-medium">
+                    {/* Desktop Navigation */}
+                    <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6 text-sm font-medium">
                         <Link href={getSectionHref("#about")} className="transition-colors hover:text-primary">About</Link>
                         <Link
                             href={isHome ? "#projects" : "/projects"}
@@ -131,23 +151,105 @@ export function Navbar() {
                         >
                             Certificates
                         </Link>
-                        <Link href={getSectionHref("#skills")} className="hidden sm:inline-block transition-colors hover:text-primary">Skills</Link>
+                        <Link href={getSectionHref("#skills")} className="transition-colors hover:text-primary">Skills</Link>
                         <Link href={getSectionHref("#contact")} className="transition-colors hover:text-primary">Contact</Link>
                     </nav>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <ThemeToggle />
                         <a
                             href={resumeUrl}
                             target="_blank"
                             rel="noreferrer"
                             download
-                            className="hidden sm:inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                            className="hidden md:inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                         >
                             Resume
                         </a>
+                        <button
+                            type="button"
+                            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                            aria-expanded={isMobileMenuOpen}
+                            aria-controls="mobile-navigation"
+                            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                            className="inline-flex md:hidden h-9 w-9 items-center justify-center rounded-lg border border-border/50 bg-background/50 text-foreground hover:bg-accent hover:border-primary/40 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                        >
+                            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                        </button>
                     </div>
                 </div>
+
+                {/* Mobile Collapsible Navigation Menu */}
+                {isMobileMenuOpen && (
+                    <nav
+                        id="mobile-navigation"
+                        aria-label="Mobile navigation"
+                        className="md:hidden border-t border-border/40 py-4 animate-in fade-in slide-in-from-top-2 duration-200"
+                    >
+                        <div className="flex flex-col space-y-1 text-sm font-medium">
+                            <Link
+                                href={getSectionHref("#about")}
+                                onClick={closeMobileMenu}
+                                className="rounded-lg px-3 py-2.5 text-foreground transition-colors hover:bg-muted hover:text-primary"
+                            >
+                                About
+                            </Link>
+                            <Link
+                                href={isHome ? "#projects" : "/projects"}
+                                onClick={closeMobileMenu}
+                                className={`rounded-lg px-3 py-2.5 transition-colors hover:bg-muted hover:text-primary ${
+                                    isProjects ? "bg-primary/10 text-primary font-bold" : "text-foreground"
+                                }`}
+                            >
+                                Projects
+                            </Link>
+                            <Link
+                                href={isHome ? "#classes" : "/classes"}
+                                onClick={closeMobileMenu}
+                                className={`rounded-lg px-3 py-2.5 transition-colors hover:bg-muted hover:text-primary ${
+                                    isClasses ? "bg-primary/10 text-primary font-bold" : "text-foreground"
+                                }`}
+                            >
+                                Classes
+                            </Link>
+                            <Link
+                                href={isHome ? "#certificates" : "/certificates"}
+                                onClick={closeMobileMenu}
+                                className={`rounded-lg px-3 py-2.5 transition-colors hover:bg-muted hover:text-primary ${
+                                    isCertificates ? "bg-primary/10 text-primary font-bold" : "text-foreground"
+                                }`}
+                            >
+                                Certificates
+                            </Link>
+                            <Link
+                                href={getSectionHref("#skills")}
+                                onClick={closeMobileMenu}
+                                className="rounded-lg px-3 py-2.5 text-foreground transition-colors hover:bg-muted hover:text-primary"
+                            >
+                                Skills
+                            </Link>
+                            <Link
+                                href={getSectionHref("#contact")}
+                                onClick={closeMobileMenu}
+                                className="rounded-lg px-3 py-2.5 text-foreground transition-colors hover:bg-muted hover:text-primary"
+                            >
+                                Contact
+                            </Link>
+                            <div className="pt-2">
+                                <a
+                                    href={resumeUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    download
+                                    onClick={closeMobileMenu}
+                                    className="inline-flex w-full h-10 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                    Resume
+                                </a>
+                            </div>
+                        </div>
+                    </nav>
+                )}
             </div>
         </header>
     );
