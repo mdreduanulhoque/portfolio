@@ -100,6 +100,7 @@ export function Navbar() {
     const isProjects = pathname?.startsWith("/projects") ?? false;
     const isClasses = pathname?.startsWith("/classes") ?? false;
     const isCertificates = pathname?.startsWith("/certificates") ?? false;
+    const isGallery = pathname?.startsWith("/gallery") ?? false;
     const resumeUrl = profile?.resumeUrl || "/md_reduanul_hoque_resume.pdf";
 
     const getSectionHref = (hash: string) => {
@@ -153,6 +154,16 @@ export function Navbar() {
                         </Link>
                         <Link href={getSectionHref("#skills")} className="transition-colors hover:text-primary">Skills</Link>
                         <Link href={getSectionHref("#contact")} className="transition-colors hover:text-primary">Contact</Link>
+                        <Link
+                            href="/gallery"
+                            className={`transition-colors relative py-1 hover:text-primary ${
+                                isGallery
+                                    ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+                                    : "text-muted-foreground hover:text-primary"
+                            }`}
+                        >
+                            Gallery
+                        </Link>
                     </nav>
 
                     <div className="flex items-center gap-2 sm:gap-4">
@@ -234,6 +245,15 @@ export function Navbar() {
                                 className="rounded-lg px-3 py-2.5 text-foreground transition-colors hover:bg-muted hover:text-primary"
                             >
                                 Contact
+                            </Link>
+                            <Link
+                                href="/gallery"
+                                onClick={closeMobileMenu}
+                                className={`rounded-lg px-3 py-2.5 transition-colors hover:bg-muted hover:text-primary ${
+                                    isGallery ? "bg-primary/10 text-primary font-bold" : "text-foreground"
+                                }`}
+                            >
+                                Gallery
                             </Link>
                             <div className="pt-2">
                                 <a

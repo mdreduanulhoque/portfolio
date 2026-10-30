@@ -52,15 +52,28 @@ export function normalizeImageUrl(url: string | undefined | null): string {
 }
 
 /**
- * Extracts a Google Drive File ID from any sharing link, open link, uc link,
- * or returns the raw ID if already provided.
+ * Checks whether a user-supplied string is a Google Drive Folder link or the Gallery Folder ID
+ * rather than an individual image file.
+ */
+export function isDriveFolderInput(urlOrId: string | undefined | null): boolean {
+  if (!urlOrId) return false;
+  const trimmed = urlOrId.trim();
+  if (/\/folders\//i.test(trimmed)) return true;
+  if (trimmed === GOOGLE_DRIVE_GALLERY_FOLDER_ID) return true;
+  return false;
+}
+
+/**
+ * Extracts a Google Drive File ID from any sharing link, open link, uc link, thumbnail link,
+ * or returns the raw ID if already provided. Rejects folder links.
  */
 export function extractDriveFileId(urlOrId: string | undefined | null): string {
   if (!urlOrId) return "";
   const trimmed = urlOrId.trim();
+  if (isDriveFolderInput(trimmed)) return "";
 
-  // /file/d/{ID}
-  const filePattern = /\/file\/d\/([a-zA-Z0-9_-]{20,})/i;
+  // /file/d/{ID} or lh3.googleusercontent.com/d/{ID}
+  const filePattern = /\/(?:file\/)?d\/([a-zA-Z0-9_-]{20,})/i;
   const fileMatch = trimmed.match(filePattern);
   if (fileMatch && fileMatch[1]) return fileMatch[1];
 
@@ -80,6 +93,12 @@ export function extractDriveFileId(urlOrId: string | undefined | null): string {
 export const GOOGLE_DRIVE_CERTIFICATES_FOLDER =
   "https://drive.google.com/drive/folders/1PBa---xjqgdlkNpy4bL4Tzask0NeRSxQ?usp=sharing";
 
+export const GOOGLE_DRIVE_GALLERY_FOLDER_ID =
+  "1QrwVkUnNKiHK8QF_3t8cgEArOqkXfzOZ";
+
+export const GOOGLE_DRIVE_GALLERY_FOLDER =
+  `https://drive.google.com/drive/folders/${GOOGLE_DRIVE_GALLERY_FOLDER_ID}?usp=sharing`;
+
 /**
  * Generates an embeddable Google Drive PDF preview URL for iframes.
  */
@@ -96,6 +115,37 @@ export function getDriveThumbnailUrl(urlOrId: string | undefined | null): string
   const id = extractDriveFileId(urlOrId);
   if (!id) return "";
   return `https://lh3.googleusercontent.com/d/${id}=w800`;
+}
+
+/**
+ * Generates a direct Google Drive image URL at a requested pixel width (e.g., w800 for cards, w1600 for lightbox).
+ */
+export function getDriveGalleryImageUrl(
+  urlOrId: string | undefined | null,
+  width: number = 800
+): string {
+  const id = extractDriveFileId(urlOrId);
+  if (!id) return normalizeImageUrl(urlOrId);
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w${width}`;
+}
+
+/**
+ * Returns ordered candidate URLs for rendering a Google Drive image resiliently across browsers.
+ */
+export function getDriveImageFallbackUrls(
+  urlOrId: string | undefined | null,
+  width: number = 1000
+): string[] {
+  const id = extractDriveFileId(urlOrId);
+  if (!id) {
+    const normalized = normalizeImageUrl(urlOrId);
+    return normalized ? [normalized] : [];
+  }
+  return [
+    `https://drive.google.com/thumbnail?id=${id}&sz=w${width}`,
+    `https://lh3.googleusercontent.com/d/${id}=w${width}`,
+    `https://drive.google.com/uc?export=view&id=${id}`,
+  ];
 }
 
 /**
@@ -305,6 +355,34 @@ export interface Certificate {
   driveUrl: string;
   fileId?: string;
   order: number;
+}
+
+export interface GalleryItem {
+  id: string;
+  fileId: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  date?: string;
+  driveUrl: string;
+  order: number;
+  isHidden?: boolean;
+  createdAt?: string;
+  fromDriveOnly?: boolean;
+}
+
+export interface GallerySettings {
+  bridgeUrl?: string;
+  folderUrl?: string;
+  updatedAt?: string;
+}
+
+export interface DriveBridgeFile {
+  id: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+  createdTime?: string;
 }
 
 export interface SocialLinks {
@@ -815,4 +893,235 @@ export function resolveProjects(dbProjects: Project[] | undefined | null): Proje
   }));
 
   return [...dbProjects, ...adjustedMissing].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+// ─── Google Drive Gallery Bridge & Resolution ─────────────────────────
+
+export const GOOGLE_APPS_SCRIPT_BRIDGE_CODE = `// Hardened Google Apps Script Bridge for Portfolio Gallery
+// 1. Go to https://script.google.com and create a New Project
+// 2. Paste this code into Code.gs and click Save
+// 3. Click "Deploy" -> "New deployment" -> Select type: "Web app"
+// 4. Set "Execute as": "Me" and "Who has access": "Anyone"
+// 5. Copy the Web App URL (https://script.google.com/macros/s/.../exec) and paste it in Admin Gallery!
+
+// Strictly locked to this single public folder ID (never accepts folderId from request params)
+const FOLDER_ID = "${GOOGLE_DRIVE_GALLERY_FOLDER_ID}";
+const CACHE_KEY = "PORTFOLIO_GALLERY_ITEMS_V1";
+const CACHE_TTL_SECONDS = 120; // 2-minute cache to protect personal Google account quotas
+
+function doGet() {
+  try {
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get(CACHE_KEY);
+    if (cached) {
+      return ContentService
+        .createTextOutput(cached)
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const folder = DriveApp.getFolderById(FOLDER_ID);
+    const files = folder.getFiles();
+    const items = [];
+
+    while (files.hasNext()) {
+      const file = files.next();
+      if (file.isTrashed()) continue;
+      const mime = file.getMimeType() || "";
+      if (mime.indexOf("image/") === 0) {
+        // Ensure image inside the public gallery folder is viewable by portfolio <img> tags
+        try {
+          if (file.getSharingAccess() === DriveApp.Access.PRIVATE) {
+            file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          }
+        } catch (shareErr) {}
+
+        items.push({
+          id: file.getId(),
+          description: file.getDescription() || "",
+          mimeType: mime,
+          createdTime: file.getDateCreated().toISOString()
+        });
+      }
+    }
+
+    // Sort newest first by default
+    items.sort(function(a, b) {
+      return new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime();
+    });
+
+    const output = JSON.stringify({ items: items });
+    cache.put(CACHE_KEY, output, CACHE_TTL_SECONDS);
+
+    return ContentService
+      .createTextOutput(output)
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ error: "Unable to list gallery folder", items: [] }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+
+/**
+ * Validates that a Google Apps Script Web App URL points to an allowed Google host.
+ */
+export function isValidAppsScriptUrl(url: string | undefined | null): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url.trim());
+    return (
+      parsed.protocol === "https:" &&
+      (parsed.hostname === "script.google.com" ||
+        parsed.hostname === "script.googleusercontent.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Formats a raw image filename into a clean readable title if needed (removes extension).
+ */
+export function cleanDriveFileName(fileName: string | undefined | null): string {
+  if (!fileName) return "";
+  return fileName
+    .replace(/\.[a-zA-Z0-9]{2,5}$/, "")
+    .replace(/[_-]+/g, " ")
+    .trim();
+}
+
+/**
+ * Fetches the live image file list from the Google Apps Script Web App Bridge
+ * with bounded timeout and strict response schema validation.
+ */
+export async function fetchDriveFolderImages(
+  bridgeUrl: string | undefined | null,
+  signal?: AbortSignal
+): Promise<DriveBridgeFile[]> {
+  const resolvedUrl = (bridgeUrl || process.env.NEXT_PUBLIC_GALLERY_BRIDGE_URL || "").trim();
+  if (!isValidAppsScriptUrl(resolvedUrl)) {
+    return [];
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  const onAbort = () => controller.abort();
+  signal?.addEventListener("abort", onAbort, { once: true });
+
+  try {
+    const response = await fetch(resolvedUrl, {
+      method: "GET",
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Drive bridge returned HTTP ${response.status}`);
+    }
+
+    const payload: unknown = await response.json();
+    const rawList = Array.isArray(payload)
+      ? payload
+      : payload &&
+          typeof payload === "object" &&
+          "items" in payload &&
+          Array.isArray((payload as { items: unknown }).items)
+        ? (payload as { items: unknown[] }).items
+        : [];
+
+    const validated: DriveBridgeFile[] = [];
+    for (const entry of rawList) {
+      if (!entry || typeof entry !== "object") continue;
+      const obj = entry as Record<string, unknown>;
+      const id = typeof obj.id === "string" ? obj.id.trim() : "";
+      if (!/^[a-zA-Z0-9_-]{10,}$/.test(id)) continue;
+
+      validated.push({
+        id,
+        name: typeof obj.name === "string" ? obj.name.trim() : "",
+        description: typeof obj.description === "string" ? obj.description.trim() : "",
+        mimeType: typeof obj.mimeType === "string" ? obj.mimeType.trim() : "image/jpeg",
+        createdTime: typeof obj.createdTime === "string" ? obj.createdTime.trim() : undefined,
+      });
+    }
+
+    return validated;
+  } finally {
+    clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", onAbort);
+  }
+}
+
+/**
+ * Merges Firestore gallery documents with live Google Drive folder images.
+ * - Any image in the Google Drive folder automatically appears even if not yet saved in Firestore.
+ * - Firestore metadata (description, title, category, date, order, isHidden) enriches/overrides the Drive file.
+ */
+export function mergeGalleryItems(
+  dbItems: GalleryItem[] | undefined | null,
+  driveFiles: DriveBridgeFile[] | undefined | null,
+  includeHidden: boolean = false
+): GalleryItem[] {
+  const safeDb = dbItems ? [...dbItems] : [];
+  const safeDrive = driveFiles ? [...driveFiles] : [];
+
+  const dbByFileId = new Map<string, GalleryItem>();
+  for (const item of safeDb) {
+    const fid = extractDriveFileId(item.fileId || item.driveUrl);
+    if (fid) {
+      dbByFileId.set(fid, { ...item, fileId: fid });
+    }
+  }
+
+  const merged: GalleryItem[] = [];
+  const seenFileIds = new Set<string>();
+
+  // 1. Add all Firestore items first (enriching with Drive metadata if matched)
+  for (const dbItem of safeDb) {
+    const fid = extractDriveFileId(dbItem.fileId || dbItem.driveUrl);
+    const matchingDrive = fid ? safeDrive.find((df) => df.id === fid) : undefined;
+    if (fid) seenFileIds.add(fid);
+
+    merged.push({
+      ...dbItem,
+      fileId: fid || dbItem.fileId,
+      driveUrl: dbItem.driveUrl || (fid ? getDriveViewUrl(fid) : ""),
+      description: dbItem.description || matchingDrive?.description || "",
+      fromDriveOnly: false,
+    });
+  }
+
+  // 2. Append any newly uploaded Google Drive folder images not yet saved in Firestore
+  const maxOrder = merged.length > 0 ? Math.max(...merged.map((m) => m.order ?? 0)) : -1;
+  safeDrive.forEach((df, idx) => {
+    if (seenFileIds.has(df.id)) return;
+    seenFileIds.add(df.id);
+
+    const formattedDate = df.createdTime
+      ? new Date(df.createdTime).toLocaleDateString("en-US", {
+          month: "short",
+          year: "numeric",
+        })
+      : undefined;
+
+    merged.push({
+      id: `drive_${df.id}`,
+      fileId: df.id,
+      title: "",
+      description: df.description || "",
+      category: "",
+      date: formattedDate,
+      driveUrl: getDriveViewUrl(df.id),
+      order: maxOrder + 1 + idx,
+      isHidden: false,
+      createdAt: df.createdTime,
+      fromDriveOnly: true,
+    });
+  });
+
+  const filtered = includeHidden ? merged : merged.filter((item) => !item.isHidden);
+  return filtered.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }

@@ -22,6 +22,7 @@ import {
   X,
   ExternalLink,
   Video,
+  Camera,
 } from "lucide-react";
 
 const navigationItems = [
@@ -35,6 +36,7 @@ const navigationItems = [
   { name: "Skills", href: "/admin/skills", icon: BookOpen },
   { name: "Classes", href: "/admin/classes", icon: Video },
   { name: "Certificates", href: "/admin/certificates", icon: Award },
+  { name: "Gallery", href: "/admin/gallery", icon: Camera },
   { name: "Social Links", href: "/admin/social-links", icon: Share2 },
 ];
 

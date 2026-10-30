@@ -52,6 +52,14 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    match /gallery/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /gallery_settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
 
     // Deny all other unmatched collections
     match /{document=**} {

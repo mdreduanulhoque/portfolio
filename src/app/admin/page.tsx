@@ -6,7 +6,7 @@ import { useFirestoreCollection } from "@/hooks/useFirestoreCollection";
 import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, writeBatch } from "firebase/firestore";
-import type { Profile, Education, Experience, Achievement, Project, Skill, ClassItem, Certificate, SocialLinks, BlogPost } from "@/lib/data";
+import type { Profile, Education, Experience, Achievement, Project, Skill, ClassItem, Certificate, SocialLinks, BlogPost, GalleryItem } from "@/lib/data";
 import { fallbackBlogPosts, fallbackProfile, fallbackSocialLinks, fallbackEducation, fallbackExperience, fallbackAchievements, fallbackProjects, fallbackSkills, fallbackClasses, fallbackCertificates, resolveCertificates, resolveClasses, resolveProjects } from "@/lib/data";
 import {
   User,
@@ -22,6 +22,7 @@ import {
   Newspaper,
   Share2,
   Video,
+  Camera,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -37,6 +38,7 @@ export default function AdminDashboardOverview() {
   const { data: skills } = useFirestoreCollection<Skill>("skills");
   const { data: classes } = useFirestoreCollection<ClassItem>("classes");
   const { data: certificates } = useFirestoreCollection<Certificate>("certificates");
+  const { data: gallery } = useFirestoreCollection<GalleryItem>("gallery");
   const { data: updates } = useFirestoreCollection<BlogPost>("updates");
 
   const [seeding, setSeeding] = useState(false);
@@ -54,6 +56,7 @@ export default function AdminDashboardOverview() {
     { name: "Skills", count: skills.length, href: "/admin/skills", icon: BookOpen, desc: "Manage skills list, file size style, and categories." },
     { name: "Classes", count: resolveClasses(classes).length, href: "/admin/classes", icon: Video, desc: "Manage YouTube classes, descriptions, and video IDs." },
     { name: "Certificates", count: resolveCertificates(certificates).length, href: "/admin/certificates", icon: Award, desc: "Manage Google Drive PDF certificates, issuers, dates, and awards." },
+    { name: "Gallery", count: gallery.length, href: "/admin/gallery", icon: Camera, desc: "Auto-sync Google Drive gallery photos and add custom descriptions." },
     { name: "Social Links", count: socialLinks ? 1 : 0, href: "/admin/social-links", icon: Share2, desc: "Manage social profiles, email, and resume URLs." },
   ];
 
