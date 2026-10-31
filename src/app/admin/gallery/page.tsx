@@ -132,8 +132,6 @@ export default function AdminGalleryPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [driveUrl, setDriveUrl] = useState("");
   const [description, setDescription] = useState("");
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
   const [date, setDate] = useState("");
   const [isHidden, setIsHidden] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -220,8 +218,6 @@ export default function AdminGalleryPage() {
     setEditingId(null);
     setDriveUrl("");
     setDescription("");
-    setTitle("");
-    setCategory("");
     setDate("");
     setIsHidden(false);
   };
@@ -230,8 +226,6 @@ export default function AdminGalleryPage() {
     setEditingId(item.id);
     setDriveUrl(item.driveUrl || item.fileId || "");
     setDescription(item.description || "");
-    setTitle(item.title || "");
-    setCategory(item.category || "");
     setDate(item.date || "");
     setIsHidden(Boolean(item.isHidden));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -297,21 +291,15 @@ export default function AdminGalleryPage() {
       unsavedDriveItems.forEach((item, index) => {
         const docId = item.fileId;
         const docRef = doc(db, "gallery", docId);
-        batch.set(
-          docRef,
-          {
-            fileId: item.fileId,
-            driveUrl: getDriveViewUrl(item.fileId),
-            title: item.title || "",
-            description: item.description || "",
-            category: item.category || "",
-            date: item.date || "",
-            isHidden: Boolean(item.isHidden),
-            order: existingMaxOrder + 1 + index,
-            createdAt: item.createdAt || new Date().toISOString(),
-          },
-          { merge: true }
-        );
+        batch.set(docRef, {
+          fileId: item.fileId,
+          driveUrl: getDriveViewUrl(item.fileId),
+          description: (item.description || "").trim().slice(0, 1000),
+          date: (item.date || "").trim().slice(0, 60),
+          isHidden: Boolean(item.isHidden),
+          order: existingMaxOrder + 1 + index,
+          createdAt: item.createdAt || new Date().toISOString(),
+        });
       });
 
       await batch.commit();
@@ -355,16 +343,14 @@ export default function AdminGalleryPage() {
       const payload = {
         fileId: extractedId,
         driveUrl: normalizedViewUrl,
-        description: description.trim(),
-        title: title.trim(),
-        category: category.trim(),
-        date: date.trim(),
+        description: description.trim().slice(0, 1000),
+        date: date.trim().slice(0, 60),
         isHidden,
         order: existingItem?.order !== undefined ? existingItem.order : maxOrder + 1,
         createdAt: existingItem?.createdAt || new Date().toISOString(),
       };
 
-      await setDoc(doc(db, "gallery", targetDocId), payload, { merge: true });
+      await setDoc(doc(db, "gallery", targetDocId), payload);
       toast.success(
         existingItem || (editingId && !editingId.startsWith("drive_"))
           ? "Gallery image & description updated!"
@@ -387,21 +373,15 @@ export default function AdminGalleryPage() {
           ? Math.max(...dbGallery.map((g) => g.order ?? 0))
           : -1;
 
-      await setDoc(
-        doc(db, "gallery", targetDocId),
-        {
-          fileId: item.fileId,
-          driveUrl: item.driveUrl || getDriveViewUrl(item.fileId),
-          title: item.title || "",
-          description: item.description || "",
-          category: item.category || "",
-          date: item.date || "",
-          isHidden: !item.isHidden,
-          order: item.order ?? maxOrder + 1,
-          createdAt: item.createdAt || new Date().toISOString(),
-        },
-        { merge: true }
-      );
+      await setDoc(doc(db, "gallery", targetDocId), {
+        fileId: item.fileId,
+        driveUrl: getDriveViewUrl(item.fileId || item.driveUrl),
+        description: (item.description || "").trim().slice(0, 1000),
+        date: (item.date || "").trim().slice(0, 60),
+        isHidden: !item.isHidden,
+        order: item.order ?? maxOrder + 1,
+        createdAt: item.createdAt || new Date().toISOString(),
+      });
       toast.success(
         !item.isHidden
           ? "Image hidden from public gallery."
@@ -473,7 +453,7 @@ export default function AdminGalleryPage() {
             Manage Gallery
           </h1>
           <p className="text-muted-foreground font-mono text-xs mt-1">
-            Auto-sync images from your Google Drive folder and add descriptions, titles, or categories.
+            Auto-sync images from your Google Drive folder and manage descriptions, dates, and Drive links.
           </p>
         </div>
 
@@ -688,6 +668,7 @@ export default function AdminGalleryPage() {
               </label>
               <textarea
                 rows={3}
+                maxLength={1000}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Write a story, caption, or context for this photo (optional)..."
@@ -695,46 +676,19 @@ export default function AdminGalleryPage() {
               />
             </div>
 
-            {/* Optional Title, Category, Date */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-mono uppercase text-muted-foreground mb-1.5">
-                  Title (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., ICPC Dhaka Regional"
-                  className="w-full px-3.5 py-2 rounded-lg bg-background border border-border/60 focus:border-primary focus:outline-none text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono uppercase text-muted-foreground mb-1.5">
-                  Category (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="e.g., Contests, Campus"
-                  className="w-full px-3.5 py-2 rounded-lg bg-background border border-border/60 focus:border-primary focus:outline-none text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono uppercase text-muted-foreground mb-1.5">
-                  Date (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  placeholder="e.g., Oct 2026"
-                  className="w-full px-3.5 py-2 rounded-lg bg-background border border-border/60 focus:border-primary focus:outline-none text-sm"
-                />
-              </div>
+            {/* Optional Date */}
+            <div>
+              <label className="block text-xs font-mono uppercase text-muted-foreground mb-1.5">
+                Date (Optional)
+              </label>
+              <input
+                type="text"
+                maxLength={60}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                placeholder="e.g., Oct 2026"
+                className="w-full px-3.5 py-2 rounded-lg bg-background border border-border/60 focus:border-primary focus:outline-none text-sm"
+              />
             </div>
 
             {/* Google Drive File Link or ID */}
@@ -899,7 +853,7 @@ export default function AdminGalleryPage() {
                         <AdminResilientImage
                           key={fileIdentifier}
                           fileIdOrUrl={fileIdentifier}
-                          alt={item.title || item.description || "Gallery item"}
+                          alt={item.description || "Gallery item"}
                           width={400}
                           fillMode
                         />
@@ -923,12 +877,6 @@ export default function AdminGalleryPage() {
                           </span>
                         )}
 
-                        {item.category && (
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-foreground">
-                            {item.category}
-                          </span>
-                        )}
-
                         {item.date && (
                           <span className="text-[10px] font-mono text-muted-foreground">
                             • {item.date}
@@ -941,12 +889,6 @@ export default function AdminGalleryPage() {
                           </span>
                         )}
                       </div>
-
-                      {item.title && (
-                        <h3 className="font-bold text-foreground font-lora text-sm truncate">
-                          {item.title}
-                        </h3>
-                      )}
 
                       {item.description ? (
                         <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
@@ -1019,7 +961,7 @@ export default function AdminGalleryPage() {
                     <a
                       href={viewUrl}
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       className="p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
                       title="Open in Google Drive"
                     >
@@ -1066,10 +1008,15 @@ export default function AdminGalleryPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-border/50 flex items-center justify-between">
-              <div className="min-w-0">
+              <div className="min-w-0 flex items-center gap-2">
                 <h3 className="font-bold font-lora text-base text-foreground truncate">
-                  {previewItem.title || "Gallery Image Preview"}
+                  Gallery Image Preview
                 </h3>
+                {previewItem.date && (
+                  <span className="text-xs font-mono text-muted-foreground">
+                    • {previewItem.date}
+                  </span>
+                )}
               </div>
               <button
                 type="button"
@@ -1085,7 +1032,7 @@ export default function AdminGalleryPage() {
                   previewItem.fileId || previewItem.driveUrl,
                   1400
                 )}
-                alt={previewItem.title || previewItem.description || "Preview"}
+                alt={previewItem.description || "Preview"}
                 fill
                 referrerPolicy="no-referrer"
                 sizes="100vw"

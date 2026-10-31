@@ -8,6 +8,8 @@ import { useFirestoreDoc } from "@/hooks/useFirestoreDoc";
 import type { GalleryItem, GallerySettings, DriveBridgeFile } from "@/lib/data";
 import {
   getDriveImageFallbackUrls,
+  getDriveViewUrl,
+  isSafeUrl,
   fetchDriveFolderImages,
   mergeGalleryItems,
 } from "@/lib/data";
@@ -21,7 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ImageIcon,
-  Tag,
+  ExternalLink,
 } from "lucide-react";
 
 function GalleryCardImage({
@@ -117,7 +119,6 @@ export default function GalleryPage() {
 
   const [driveFiles, setDriveFiles] = useState<DriveBridgeFile[]>([]);
   const [driveLoading, setDriveLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [lightboxImageLoading, setLightboxImageLoading] = useState(true);
 
@@ -169,26 +170,9 @@ export default function GalleryPage() {
     return mergeGalleryItems(galleryFromDb, activeDriveFiles, false);
   }, [galleryFromDb, driveFiles, activeBridgeUrl]);
 
-  // Extract distinct categories for filter pills
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    allItems.forEach((item) => {
-      const cat = item.category?.trim();
-      if (cat) set.add(cat);
-    });
-    return ["All", ...Array.from(set)];
-  }, [allItems]);
-
-  const filteredItems = useMemo(() => {
-    if (selectedCategory === "All") return allItems;
-    return allItems.filter(
-      (item) => item.category?.trim().toLowerCase() === selectedCategory.toLowerCase()
-    );
-  }, [allItems, selectedCategory]);
-
   const selectedItem =
-    selectedIndex !== null && filteredItems[selectedIndex]
-      ? filteredItems[selectedIndex]
+    selectedIndex !== null && allItems[selectedIndex]
+      ? allItems[selectedIndex]
       : null;
 
   const handleOpenLightbox = (index: number) => {
@@ -198,19 +182,19 @@ export default function GalleryPage() {
 
   const handlePrev = useCallback(() => {
     setSelectedIndex((prev) => {
-      if (prev === null || filteredItems.length === 0) return null;
+      if (prev === null || allItems.length === 0) return null;
       setLightboxImageLoading(true);
-      return (prev - 1 + filteredItems.length) % filteredItems.length;
+      return (prev - 1 + allItems.length) % allItems.length;
     });
-  }, [filteredItems.length]);
+  }, [allItems.length]);
 
   const handleNext = useCallback(() => {
     setSelectedIndex((prev) => {
-      if (prev === null || filteredItems.length === 0) return null;
+      if (prev === null || allItems.length === 0) return null;
       setLightboxImageLoading(true);
-      return (prev + 1) % filteredItems.length;
+      return (prev + 1) % allItems.length;
     });
-  }, [filteredItems.length]);
+  }, [allItems.length]);
 
   // Keyboard navigation for Lightbox
   useEffect(() => {
@@ -278,34 +262,8 @@ export default function GalleryPage() {
         </div>
       </div>
 
-      {/* Category Filter Pills (shown when at least one category exists) */}
-      {categories.length > 1 && (
-        <div className="flex flex-wrap items-center gap-2 mb-8">
-          {categories.map((cat) => {
-            const active = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => {
-                  setSelectedCategory(cat);
-                  setSelectedIndex(null);
-                }}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-all cursor-pointer ${
-                  active
-                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                    : "bg-card/60 border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/40"
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {/* Empty State */}
-      {filteredItems.length === 0 ? (
+      {allItems.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-card/30 p-12 text-center max-w-xl mx-auto my-8 space-y-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
             <ImageIcon className="w-6 h-6" />
@@ -322,13 +280,10 @@ export default function GalleryPage() {
       ) : (
         /* Responsive Masonry Gallery (Preserves Original Image Aspect Ratios) */
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 sm:gap-8 space-y-6 sm:space-y-8">
-          {filteredItems.map((item, index) => {
+          {allItems.map((item, index) => {
             const fileIdentifier = item.fileId || item.driveUrl;
             const hasTextMetadata = Boolean(
-              item.title?.trim() ||
-                item.description?.trim() ||
-                item.category?.trim() ||
-                item.date?.trim()
+              item.description?.trim() || item.date?.trim()
             );
 
             return (
@@ -341,7 +296,7 @@ export default function GalleryPage() {
                 <GalleryCardImage
                   key={fileIdentifier}
                   fileIdentifier={fileIdentifier}
-                  alt={item.title || item.description || "Portfolio gallery image"}
+                  alt={item.description || "Portfolio gallery image"}
                 />
 
                 {/* Top-Right Floating Expand Badge on Hover */}
@@ -355,33 +310,17 @@ export default function GalleryPage() {
                 {/* Transparent Blur Metadata Overlay on the Image */}
                 {hasTextMetadata && (
                   <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5 bg-black/45 backdrop-blur-md border-t border-white/15 text-white transition-all duration-300 space-y-1.5">
-                    {(item.category || item.date) && (
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        {item.category ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-white/15 text-white backdrop-blur-xs border border-white/20">
-                            <Tag className="w-2.5 h-2.5" />
-                            {item.category}
-                          </span>
-                        ) : (
-                          <span />
-                        )}
-                        {item.date && (
-                          <span className="text-[11px] font-mono text-white/85 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {item.date}
-                          </span>
-                        )}
+                    {item.date && (
+                      <div className="flex items-center justify-end">
+                        <span className="text-[11px] font-mono text-white/85 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {item.date}
+                        </span>
                       </div>
                     )}
 
-                    {item.title && (
-                      <h2 className="font-bold text-white font-lora text-base sm:text-lg leading-snug drop-shadow-xs line-clamp-1">
-                        {item.title}
-                      </h2>
-                    )}
-
                     {item.description && (
-                      <p className="text-xs sm:text-sm text-white/85 leading-relaxed whitespace-pre-line line-clamp-2">
+                      <p className="text-xs sm:text-sm text-white/90 leading-relaxed whitespace-pre-line line-clamp-2">
                         {item.description}
                       </p>
                     )}
@@ -398,7 +337,7 @@ export default function GalleryPage() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={selectedItem.title || "Gallery image viewer"}
+          aria-label="Gallery image viewer"
           className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setSelectedIndex(null)}
         >
@@ -410,21 +349,33 @@ export default function GalleryPage() {
             <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-border/50 flex items-center justify-between gap-4 bg-muted/20">
               <div className="min-w-0 flex items-center gap-2.5">
                 <span className="text-xs font-mono text-muted-foreground">
-                  {(selectedIndex ?? 0) + 1} / {filteredItems.length}
+                  {(selectedIndex ?? 0) + 1} / {allItems.length}
                 </span>
-                {selectedItem.category && (
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                    {selectedItem.category}
-                  </span>
-                )}
                 {selectedItem.date && (
-                  <span className="text-xs font-mono text-muted-foreground hidden sm:inline">
-                    • {selectedItem.date}
+                  <span className="text-xs font-mono text-muted-foreground inline-flex items-center gap-1">
+                    • <Calendar className="w-3 h-3" /> {selectedItem.date}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                {(() => {
+                  const driveHref = getDriveViewUrl(
+                    selectedItem.fileId || selectedItem.driveUrl
+                  );
+                  return isSafeUrl(driveHref) ? (
+                    <a
+                      href={driveHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/60 bg-card hover:bg-accent text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
+                      title="Open in Google Drive"
+                    >
+                      <span>Drive</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  ) : null;
+                })()}
                 <button
                   type="button"
                   onClick={() => setSelectedIndex(null)}
@@ -450,12 +401,12 @@ export default function GalleryPage() {
               <LightboxDriveImage
                 key={selectedItem.fileId || selectedItem.id}
                 fileIdentifier={selectedItem.fileId || selectedItem.driveUrl}
-                alt={selectedItem.title || selectedItem.description || "Gallery photo"}
+                alt={selectedItem.description || "Gallery photo"}
                 onLoaded={() => setLightboxImageLoading(false)}
               />
 
               {/* Previous / Next Navigation Controls */}
-              {filteredItems.length > 1 && (
+              {allItems.length > 1 && (
                 <>
                   <button
                     type="button"
@@ -478,18 +429,11 @@ export default function GalleryPage() {
             </div>
 
             {/* Lightbox Caption / Description Footer */}
-            {(selectedItem.title || selectedItem.description) && (
-              <div className="p-4 sm:p-6 bg-background border-t border-border/50 max-h-[24vh] overflow-y-auto space-y-1.5">
-                {selectedItem.title && (
-                  <h3 className="text-base sm:text-lg font-bold font-lora text-foreground">
-                    {selectedItem.title}
-                  </h3>
-                )}
-                {selectedItem.description && (
-                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                    {selectedItem.description}
-                  </p>
-                )}
+            {selectedItem.description && (
+              <div className="p-4 sm:p-6 bg-background border-t border-border/50 max-h-[24vh] overflow-y-auto">
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {selectedItem.description}
+                </p>
               </div>
             )}
           </div>

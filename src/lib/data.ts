@@ -360,9 +360,7 @@ export interface Certificate {
 export interface GalleryItem {
   id: string;
   fileId: string;
-  title?: string;
   description?: string;
-  category?: string;
   date?: string;
   driveUrl: string;
   order: number;
@@ -379,7 +377,6 @@ export interface GallerySettings {
 
 export interface DriveBridgeFile {
   id: string;
-  name: string;
   description?: string;
   mimeType?: string;
   createdTime?: string;
@@ -980,17 +977,6 @@ export function isValidAppsScriptUrl(url: string | undefined | null): boolean {
 }
 
 /**
- * Formats a raw image filename into a clean readable title if needed (removes extension).
- */
-export function cleanDriveFileName(fileName: string | undefined | null): string {
-  if (!fileName) return "";
-  return fileName
-    .replace(/\.[a-zA-Z0-9]{2,5}$/, "")
-    .replace(/[_-]+/g, " ")
-    .trim();
-}
-
-/**
  * Fetches the live image file list from the Google Apps Script Web App Bridge
  * with bounded timeout and strict response schema validation.
  */
@@ -1041,10 +1027,18 @@ export async function fetchDriveFolderImages(
 
       validated.push({
         id,
-        name: typeof obj.name === "string" ? obj.name.trim() : "",
-        description: typeof obj.description === "string" ? obj.description.trim() : "",
-        mimeType: typeof obj.mimeType === "string" ? obj.mimeType.trim() : "image/jpeg",
-        createdTime: typeof obj.createdTime === "string" ? obj.createdTime.trim() : undefined,
+        description:
+          typeof obj.description === "string"
+            ? obj.description.trim().slice(0, 1000)
+            : "",
+        mimeType:
+          typeof obj.mimeType === "string"
+            ? obj.mimeType.trim().slice(0, 100)
+            : "image/jpeg",
+        createdTime:
+          typeof obj.createdTime === "string"
+            ? obj.createdTime.trim().slice(0, 64)
+            : undefined,
       });
     }
 
@@ -1058,7 +1052,7 @@ export async function fetchDriveFolderImages(
 /**
  * Merges Firestore gallery documents with live Google Drive folder images.
  * - Any image in the Google Drive folder automatically appears even if not yet saved in Firestore.
- * - Firestore metadata (description, title, category, date, order, isHidden) enriches/overrides the Drive file.
+ * - Firestore metadata (description, date, driveUrl, order, isHidden) enriches/overrides the Drive file.
  */
 export function mergeGalleryItems(
   dbItems: GalleryItem[] | undefined | null,
@@ -1067,14 +1061,6 @@ export function mergeGalleryItems(
 ): GalleryItem[] {
   const safeDb = dbItems ? [...dbItems] : [];
   const safeDrive = driveFiles ? [...driveFiles] : [];
-
-  const dbByFileId = new Map<string, GalleryItem>();
-  for (const item of safeDb) {
-    const fid = extractDriveFileId(item.fileId || item.driveUrl);
-    if (fid) {
-      dbByFileId.set(fid, { ...item, fileId: fid });
-    }
-  }
 
   const merged: GalleryItem[] = [];
   const seenFileIds = new Set<string>();
@@ -1086,10 +1072,14 @@ export function mergeGalleryItems(
     if (fid) seenFileIds.add(fid);
 
     merged.push({
-      ...dbItem,
+      id: dbItem.id,
       fileId: fid || dbItem.fileId,
-      driveUrl: dbItem.driveUrl || (fid ? getDriveViewUrl(fid) : ""),
-      description: dbItem.description || matchingDrive?.description || "",
+      driveUrl: fid ? getDriveViewUrl(fid) : dbItem.driveUrl || "",
+      description: (dbItem.description || matchingDrive?.description || "").trim(),
+      date: (dbItem.date || "").trim(),
+      order: dbItem.order ?? 0,
+      isHidden: Boolean(dbItem.isHidden),
+      createdAt: dbItem.createdAt,
       fromDriveOnly: false,
     });
   }
@@ -1110,10 +1100,8 @@ export function mergeGalleryItems(
     merged.push({
       id: `drive_${df.id}`,
       fileId: df.id,
-      title: "",
       description: df.description || "",
-      category: "",
-      date: formattedDate,
+      date: formattedDate || "",
       driveUrl: getDriveViewUrl(df.id),
       order: maxOrder + 1 + idx,
       isHidden: false,

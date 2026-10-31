@@ -52,9 +52,20 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    function isValidGalleryDoc(data) {
+      return data.fileId is string && data.fileId.size() >= 10 && data.fileId.size() <= 128 &&
+        data.driveUrl is string && data.driveUrl.size() <= 512 &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+        (!('date' in data) || (data.date is string && data.date.size() <= 60)) &&
+        (!('order' in data) || data.order is number) &&
+        (!('isHidden' in data) || data.isHidden is bool) &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
+    }
+
     match /gallery/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isAdmin() && isValidGalleryDoc(request.resource.data);
+      allow delete: if isAdmin();
     }
     match /gallery_settings/{docId} {
       allow read: if true;
