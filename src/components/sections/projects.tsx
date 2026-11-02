@@ -63,7 +63,7 @@ export function ProjectsSection() {
 
           <Link
             href="/projects"
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm w-fit cursor-pointer group shrink-0"
+            className="hidden md:inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm w-fit cursor-pointer group shrink-0"
           >
             <span>View All ({items.length})</span>
             <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -203,6 +203,17 @@ export function ProjectsSection() {
               </div>
             );
           })}
+        </div>
+
+        {/* Mobile View All Button */}
+        <div className="mt-10 flex justify-center md:hidden">
+          <Link
+            href="/projects"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm w-fit cursor-pointer group shrink-0"
+          >
+            <span>View All ({items.length})</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
       </div>
     </section>
